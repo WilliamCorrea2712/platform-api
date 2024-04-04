@@ -22,6 +22,7 @@ if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
   } else {
     $handler();
   }
+  $conn->close();
 } else {
   echo "Rota não encontrada!";
 }

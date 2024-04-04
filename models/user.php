@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../mysql/conn.php';
 require_once __DIR__ . '/../security/token.php';
+date_default_timezone_set('America/Sao_Paulo');
 
 function userExists($name) {
     global $conn;
@@ -23,10 +24,11 @@ function addUserWithToken($name, $password) {
     }
 
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $created_at = date('Y-m-d H:i:s');
 
-    $sql = "INSERT INTO api_user (name, password) VALUES (?, ?)";
+    $sql = "INSERT INTO api_user (name, password, created_at) VALUES (?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $name, $hashed_password);
+    $stmt->bind_param("sss", $name, $hashed_password, $created_at);
 
     if ($stmt->execute()) {
         $user_id = $stmt->insert_id;
@@ -71,19 +73,21 @@ function getAllUsers() {
 
 function updateUser($id, $name, $password = null) {
     global $conn;
-  
+
+    $updated_at = date('Y-m-d H:i:s');
+
     if ($password !== null) {
-      $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-  
-      $sql = "UPDATE api_user SET name=?, password=? WHERE id=?";
-      $stmt = $conn->prepare($sql);
-      $stmt->bind_param("ssi", $name, $hashed_password, $id);
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        $sql = "UPDATE api_user SET name=?, password=?, updated_at=? WHERE id=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssi", $name, $hashed_password, $updated_at, $id);
     } else {
-      $sql = "UPDATE api_user SET name=? WHERE id=?";
-      $stmt = $conn->prepare($sql);
-      $stmt->bind_param("si", $name, $id);
+        $sql = "UPDATE api_user SET name=?, updated_at=? WHERE id=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssi", $name, $updated_at, $id);
     }
-  
+
     if ($stmt->execute()) {
         http_response_code(200);
         return array("message" => "Dados do usuário atualizados com sucesso.");
@@ -91,8 +95,7 @@ function updateUser($id, $name, $password = null) {
         http_response_code(500);
         return array("message" => "Erro ao atualizar os dados do usuário: " . $conn->error);
     }
-  }
-  
+}
 
 function delUser($user_id) {
   global $conn;
