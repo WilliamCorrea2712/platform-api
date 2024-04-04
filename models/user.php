@@ -19,24 +19,32 @@ function addUserWithToken($name, $password) {
 
     if (userExists($name)) {
         http_response_code(400);
-        return array("error" => "Usuario ja existe.");
+        return array("error" => "Usuário já existe.");
     }
 
-    $sql = "INSERT INTO api_user (name, password) VALUES ('$name', '$password')";
-    if ($conn->query($sql) === TRUE) {
-        $user_id = $conn->insert_id;
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    $sql = "INSERT INTO api_user (name, password) VALUES (?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $name, $hashed_password);
+
+    if ($stmt->execute()) {
+        $user_id = $stmt->insert_id;
 
         $token = generateToken($user_id);
 
-        $sql_token = "INSERT INTO api_tokens (user_id, token) VALUES ($user_id, '$token')";
-        $conn->query($sql_token);
+        $sql_token = "INSERT INTO api_tokens (user_id, token) VALUES (?, ?)";
+        $stmt_token = $conn->prepare($sql_token);
+        $stmt_token->bind_param("is", $user_id, $token);
+        $stmt_token->execute();
 
         return array("user_id" => $user_id, "token" => $token);
     } else {
         http_response_code(500);
-        return array("error" => "Erro ao adicionar usuário: " . $conn->error);
+        return array("error" => "Erro ao adicionar usuário: " . $stmt->error);
     }
 }
+
 
 function getAllUsers() {
   global $conn;
@@ -62,26 +70,29 @@ function getAllUsers() {
 }
 
 function updateUser($id, $name, $password = null) {
-  global $conn;
-
-  if ($password !== null) {
-    $sql = "UPDATE api_user SET name=?, password=? WHERE id=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssi", $name, $password, $id);
-  } else {
-    $sql = "UPDATE api_user SET name=? WHERE id=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $name, $id);
+    global $conn;
+  
+    if ($password !== null) {
+      $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+  
+      $sql = "UPDATE api_user SET name=?, password=? WHERE id=?";
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("ssi", $name, $hashed_password, $id);
+    } else {
+      $sql = "UPDATE api_user SET name=? WHERE id=?";
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("si", $name, $id);
+    }
+  
+    if ($stmt->execute()) {
+        http_response_code(200);
+        return array("message" => "Dados do usuário atualizados com sucesso.");
+    } else {
+        http_response_code(500);
+        return array("message" => "Erro ao atualizar os dados do usuário: " . $conn->error);
+    }
   }
-
-  if ($stmt->execute()) {
-      http_response_code(200);
-      return array("message" => "Dados do usuario atualizados com sucesso.");
-  } else {
-      http_response_code(500);
-      return array("message" => "Erro ao atualizar os dados do usuário: " . $conn->error);
-  }
-}
+  
 
 function delUser($user_id) {
   global $conn;
