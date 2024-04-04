@@ -39,7 +39,7 @@ function addUserWithToken($name, $password) {
         $stmt_token = $conn->prepare($sql_token);
         $stmt_token->bind_param("is", $user_id, $token);
         $stmt_token->execute();
-
+        $conn->close();
         return array("user_id" => $user_id, "token" => $token);
     } else {
         http_response_code(500);
@@ -64,6 +64,7 @@ function getAllUsers() {
           );
       }
 
+      $conn->close();
       http_response_code(200);
       echo json_encode($users, JSON_PRETTY_PRINT);
   } else {
@@ -89,6 +90,7 @@ function updateUser($id, $name, $password = null) {
     }
 
     if ($stmt->execute()) {
+        $conn->close();
         http_response_code(200);
         return array("message" => "Dados do usuário atualizados com sucesso.");
     } else {
@@ -114,10 +116,11 @@ function delUser($user_id) {
   $stmt_delete_user->bind_param("i", $user_id);
 
   if (!$stmt_delete_user->execute()) {
-      http_response_code(500);
-      return array("error" => "Erro ao excluir o usuário da tabela api_user: " . $conn->error);
+        http_response_code(500);
+        return array("error" => "Erro ao excluir o usuário da tabela api_user: " . $conn->error);
   }
 
+  $conn->close();
   http_response_code(200);
   return array("message" => "Usuário excluído com sucesso.");
 }
