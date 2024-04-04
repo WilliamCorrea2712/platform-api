@@ -12,6 +12,7 @@ function deleteUser($user_id) {
     $stmt_delete_tokens->bind_param("i", $user_id);
 
     if (!$stmt_delete_tokens->execute()) {
+        http_response_code(500);
         return array("error" => "Erro ao excluir os tokens do usuário da tabela api_tokens: " . $conn->error);
     }
 
@@ -20,10 +21,12 @@ function deleteUser($user_id) {
     $stmt_delete_user->bind_param("i", $user_id);
 
     if (!$stmt_delete_user->execute()) {
+        http_response_code(500);
         return array("error" => "Erro ao excluir o usuário da tabela api_user: " . $conn->error);
     }
 
-    return json_encode(array("message" => "Usuário excluído com sucesso."), JSON_UNESCAPED_UNICODE);
+    http_response_code(200);
+    return array("message" => "Usuário excluído com sucesso.");
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -38,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $result = deleteUser($delete_user_id);
 
-        echo json_encode(($result),JSON_UNESCAPED_UNICODE);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(400);
         echo json_encode(array("message" => "ID do usuário não fornecido."), JSON_UNESCAPED_UNICODE);

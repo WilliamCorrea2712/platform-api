@@ -2,13 +2,19 @@
 require_once __DIR__ . '/../mysql/conn.php';
 require_once __DIR__ . '/../security/tokens.php';
 
-verifyToken();
+$user_id = verifyToken()->user_id;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") { 
     if (isset($_POST['id']) && isset($_POST['name']) && isset($_POST['password'])) {
         $id = $_POST['id'];
         $name = $_POST['name'];
         $password = $_POST['password'];
+        
+        if ((int)$id != $user_id) {
+            http_response_code(401);
+            echo json_encode(array("message" => "Você não tem permissão para editar este usuário."), JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
         $sql = "UPDATE api_user SET name='$name', password='$password' WHERE id='$id'";
 

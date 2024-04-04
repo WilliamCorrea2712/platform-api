@@ -26,7 +26,7 @@ function verifyToken() {
 
   if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
       http_response_code(401);
-      echo json_encode(array("message" => "Token de autenticação não fornecido."), JSON_UNESCAPED_UNICODE);
+      echo json_encode(array("message" => "Token de autenticação não fornecido!"), JSON_UNESCAPED_UNICODE);
       exit;
   }
 
@@ -64,11 +64,13 @@ function decodeTokenFromDatabase($token, $conn) {
       if ($row['total'] > 0) {
           return $payload;
       } else {
+          http_response_code(401);
           echo json_encode(array("message" => "Token de autenticação inválido!"), JSON_UNESCAPED_UNICODE);
           exit;
       }
       $stmt->close();
   } else {
+      http_response_code(401);
       echo json_encode(array("message" => "Token Expirado!"), JSON_UNESCAPED_UNICODE);
       exit;
   }

@@ -18,7 +18,8 @@ function addUserWithToken($name, $password) {
     global $conn;
 
     if (userExists($name)) {
-        return array("error" => "Usuario ja existe.");
+        http_response_code(400);
+        return array("error" => "Usuario já existe.");
     }
 
     $sql = "INSERT INTO api_user (name, password) VALUES ('$name', '$password')";
@@ -32,6 +33,7 @@ function addUserWithToken($name, $password) {
 
         return array("user_id" => $user_id, "token" => $token);
     } else {
+        http_response_code(500);
         return array("error" => "Erro ao adicionar usuário: " . $conn->error);
     }
 }
