@@ -57,9 +57,11 @@ function decodeTokenFromDatabase($token, $conn) {
       $stmt = $conn->prepare($sql);
       $stmt->bind_param("is", $user_id, $token);
       $stmt->execute();
-      $result = $stmt->get_result();
 
-      if ($result->num_rows > 0) {
+      $result = $stmt->get_result();
+      $row = $result->fetch_assoc();
+
+      if ($row['total'] > 0) {
           return $payload;
       } else {
           echo json_encode(array("message" => "Token de autenticação inválido!"), JSON_UNESCAPED_UNICODE);
