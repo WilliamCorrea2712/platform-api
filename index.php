@@ -1,5 +1,5 @@
 <?php
-$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoxMiwiZXhwaXJhdGlvbiI6MTc0Mzc4MjgyNH0.PsPiAZ6xofS7XDjgxzcmfu60c1bJyhDs0Mg78XUqbWg";
+$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyMiwiZXhwIjoxNzQzNzkxMzIwfQ.1hDnJ-pfMux1vDN2yMY50QqmbNkmL1Ur0L3uX4txM6Y";
 
 $token_parts = explode(".", $token);
 

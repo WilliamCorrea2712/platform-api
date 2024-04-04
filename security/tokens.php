@@ -38,7 +38,7 @@ function verifyToken() {
       return $decoded;
   } catch (Exception $e) {
       http_response_code(401);
-      echo json_encode(array("message" => "Token de autenticação inválido!"));
+      echo json_encode(array("message" => "Token de autenticação inválido!"), JSON_UNESCAPED_UNICODE);
       exit;
   }
 }
@@ -49,7 +49,7 @@ function decodeTokenFromDatabase($token, $conn) {
   $payload = json_decode(base64_decode($token_parts[1]));
 
   $user_id = $payload->user_id;
-  $expiration_timestamp = $payload->expiration;
+  $expiration_timestamp = $payload->exp;
   $current_timestamp = time();
 
   if ($current_timestamp < $expiration_timestamp) {
@@ -62,12 +62,12 @@ function decodeTokenFromDatabase($token, $conn) {
       if ($result->num_rows > 0) {
           return $payload;
       } else {
-          echo json_encode(array("message" => "Token de autenticação inválido!"));
+          echo json_encode(array("message" => "Token de autenticação inválido!"), JSON_UNESCAPED_UNICODE);
           exit;
       }
       $stmt->close();
   } else {
-      echo json_encode(array("message" => "Token Expirado!"));
+      echo json_encode(array("message" => "Token Expirado!"), JSON_UNESCAPED_UNICODE);
       exit;
   }
 }

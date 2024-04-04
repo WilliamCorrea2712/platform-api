@@ -1,9 +1,25 @@
 <?php
 require_once __DIR__ . '/../mysql/conn.php';
-require_once __DIR__ . '/../security/token.php';
+require_once __DIR__ . '/../security/tokens.php';
+
+function userExists($name) {
+    global $conn;
+
+    $sql = "SELECT COUNT(*) AS total FROM api_user WHERE name = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $name);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total'] > 0;
+}
 
 function addUserWithToken($name, $password) {
     global $conn;
+
+    if (userExists($name)) {
+        return array("error" => "Usuario ja existe.");
+    }
 
     $sql = "INSERT INTO api_user (name, password) VALUES ('$name', '$password')";
     if ($conn->query($sql) === TRUE) {
@@ -30,11 +46,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo json_encode($result);
     } else {
         http_response_code(400);
-        echo json_encode(array("message" => "Dados incompletos."));
+        echo json_encode(array("message" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
     }
 } else {
     http_response_code(405);
-    echo json_encode(array("message" => "Método não permitido."));
+    echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
 }
 
 $conn->close();
