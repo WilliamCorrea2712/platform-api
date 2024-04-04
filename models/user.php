@@ -49,27 +49,27 @@ function addUserWithToken($name, $password) {
 
 
 function getAllUsers() {
-  global $conn;
+    global $conn;
 
-  $sql = "SELECT id, name, password FROM api_user";
-  $result = $conn->query($sql);
+    $sql = "SELECT id, name, password FROM api_user";
+    $result = $conn->query($sql);
 
-  if ($result->num_rows > 0) {
-      $users = array();
+    if ($result->num_rows > 0) {
+        $users = array();
 
-      while ($row = $result->fetch_assoc()) {
-          $users[] = array(
-              'id' => $row['id'],
-              'name' => $row['name'],
-          );
-      }
+        while ($row = $result->fetch_assoc()) {
+            $users[] = array(
+                'id' => $row['id'],
+                'name' => $row['name'],
+            );
+        }
 
-      $conn->close();
-      http_response_code(200);
-      echo json_encode($users, JSON_PRETTY_PRINT);
-  } else {
-      return array();
-  }
+        $conn->close();
+        http_response_code(200);
+        echo json_encode($users, JSON_PRETTY_PRINT);
+    } else {
+        return array();
+    }
 }
 
 function updateUser($id, $name, $password = null) {
@@ -100,28 +100,28 @@ function updateUser($id, $name, $password = null) {
 }
 
 function delUser($user_id) {
-  global $conn;
+    global $conn;
 
-  $sql_delete_tokens = "DELETE FROM api_tokens WHERE user_id = ?";
-  $stmt_delete_tokens = $conn->prepare($sql_delete_tokens);
-  $stmt_delete_tokens->bind_param("i", $user_id);
+    $sql_delete_tokens = "DELETE FROM api_tokens WHERE user_id = ?";
+    $stmt_delete_tokens = $conn->prepare($sql_delete_tokens);
+    $stmt_delete_tokens->bind_param("i", $user_id);
 
-  if (!$stmt_delete_tokens->execute()) {
-      http_response_code(500);
-      return array("error" => "Erro ao excluir os tokens do usuário da tabela api_tokens: " . $conn->error);
-  }
+    if (!$stmt_delete_tokens->execute()) {
+        http_response_code(500);
+        return array("error" => "Erro ao excluir os tokens do usuário da tabela api_tokens: " . $conn->error);
+    }
 
-  $sql_delete_user = "DELETE FROM api_user WHERE id = ?";
-  $stmt_delete_user = $conn->prepare($sql_delete_user);
-  $stmt_delete_user->bind_param("i", $user_id);
+    $sql_delete_user = "DELETE FROM api_user WHERE id = ?";
+    $stmt_delete_user = $conn->prepare($sql_delete_user);
+    $stmt_delete_user->bind_param("i", $user_id);
 
-  if (!$stmt_delete_user->execute()) {
+    if (!$stmt_delete_user->execute()) {
         http_response_code(500);
         return array("error" => "Erro ao excluir o usuário da tabela api_user: " . $conn->error);
-  }
+    }
 
-  $conn->close();
-  http_response_code(200);
-  return array("message" => "Usuário excluído com sucesso.");
+    $conn->close();
+    http_response_code(200);
+    return array("message" => "Usuário excluído com sucesso.");
 }
 ?>
