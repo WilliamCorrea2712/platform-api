@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../security/token.php"; 
+date_default_timezone_set('America/Sao_Paulo');
 
   $routes = array(
     "user/addUser" => "addUser",

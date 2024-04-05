@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../mysql/conn.php';
 require_once __DIR__ . '/../../global/logs.php';
+require_once(__DIR__ . '/../../config.php');
 
 function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id) {
     global $conn;
@@ -10,7 +11,7 @@ function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_
         return json_encode(array("error" => "O cliente com o email fornecido já existe."), JSON_UNESCAPED_UNICODE);
     }
 
-    $sql = "INSERT INTO api_customers (name, email, phone_number, birth_date, cnpj_cpf, rg_ie, type_person, sex, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO " . PREFIX . "customers (name, email, phone_number, birth_date, cnpj_cpf, rg_ie, type_person, sex, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssssssssi", $name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id);
 
@@ -30,8 +31,8 @@ function getAllCustomers($customer_id = null) {
     $sql = "SELECT c.id, c.name, c.email, c.phone_number, c.birth_date, c.status, 
                    c.cnpj_cpf, c.rg_ie, c.type_person, c.sex, 
                    a.id as address_id, a.street, a.city, a.state, a.zip_code 
-            FROM api_customers c
-            LEFT JOIN api_addresses a ON c.id = a.customer_id";
+            FROM " . PREFIX . "customers c
+            LEFT JOIN " . PREFIX . "addresses a ON c.id = a.customer_id";
 
     if ($customer_id !== null) {
         $sql .= " WHERE c.id = ?";
@@ -97,7 +98,7 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
         return array("status" => 404, "response" => array("message" => "Cliente não encontrado."));
     }
 
-    $sql = "UPDATE api_customers SET ";
+    $sql = "UPDATE " . PREFIX . "customers SET ";
     $params = array();
 
     if ($name !== null) {
@@ -158,7 +159,7 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
 function deleteCustomerFromDatabase($user_id, $customer_id) {
     global $conn;
 
-    $sql_delete_addresses = "DELETE FROM api_addresses WHERE customer_id = ?";
+    $sql_delete_addresses = "DELETE FROM " . PREFIX . "addresses WHERE customer_id = ?";
     $stmt_delete_addresses = $conn->prepare($sql_delete_addresses);
     $stmt_delete_addresses->bind_param("i", $customer_id);
 
@@ -166,7 +167,7 @@ function deleteCustomerFromDatabase($user_id, $customer_id) {
         return array("success" => false, "error" => "Erro ao excluir endereços associados ao cliente: " . $stmt_delete_addresses->error);
     }
 
-    $sql_delete_customer = "DELETE FROM api_customers WHERE id = ?";
+    $sql_delete_customer = "DELETE FROM " . PREFIX . "customers WHERE id = ?";
     $stmt_delete_customer = $conn->prepare($sql_delete_customer);
     $stmt_delete_customer->bind_param("i", $customer_id);
 
@@ -174,7 +175,7 @@ function deleteCustomerFromDatabase($user_id, $customer_id) {
         insertLog($user_id, $customer_id);
 
         $deleted_addresses_ids = array();
-        $deleted_addresses_query = "SELECT id FROM api_addresses WHERE customer_id = ?";
+        $deleted_addresses_query = "SELECT id FROM " . PREFIX . "addresses WHERE customer_id = ?";
         $stmt_deleted_addresses = $conn->prepare($deleted_addresses_query);
         $stmt_deleted_addresses->bind_param("i", $customer_id);
         $stmt_deleted_addresses->execute();
@@ -203,7 +204,7 @@ function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $
 
     $created_at = date('Y-m-d H:i:s');
 
-    $sql = "INSERT INTO api_addresses (customer_id, street, city, state, zip_code, name, number, country, created_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO " . PREFIX . "addresses (customer_id, street, city, state, zip_code, name, number, country, created_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("issssssssi", $customer_id, $street, $city, $state, $zip_code, $name, $number, $country, $created_at, $user_id);
 
@@ -224,7 +225,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
         return array("status" => 404, "response" => array("message" => "Endereço não encontrado."));
     }
 
-    $sql = "UPDATE api_addresses SET ";
+    $sql = "UPDATE " . PREFIX . "addresses SET ";
     $params = array();
     if ($street !== null) {
         $sql .= "street = ?, ";
@@ -281,7 +282,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
 function deleteAddressFromDatabase($address_id) {
     global $conn;
 
-    $sql = "DELETE FROM api_addresses WHERE id = ?";
+    $sql = "DELETE FROM " . PREFIX . "addresses WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $address_id);
 

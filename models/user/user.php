@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../mysql/conn.php';
 require_once __DIR__ . '/../../global/helpers.php';
 require_once __DIR__ . '/../../security/token.php';
-date_default_timezone_set('America/Sao_Paulo');
+require_once(__DIR__ . '/../../config.php');
 
 function addUserWithToken($name, $password, $email) {
     global $conn;
@@ -15,7 +15,7 @@ function addUserWithToken($name, $password, $email) {
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $created_at = date('Y-m-d H:i:s');
 
-    $sql = "INSERT INTO api_user (name, password, email, created_at) VALUES (?, ?, ?, ?)";
+    $sql = "INSERT INTO " . PREFIX . "user (name, password, email, created_at) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssss", $name, $hashed_password, $email, $created_at);
 
@@ -24,7 +24,7 @@ function addUserWithToken($name, $password, $email) {
 
         $token = generateToken($user_id);
 
-        $sql_token = "INSERT INTO api_tokens (user_id, token) VALUES (?, ?)";
+        $sql_token = "INSERT INTO " . PREFIX . "tokens (user_id, token) VALUES (?, ?)";
         $stmt_token = $conn->prepare($sql_token);
         $stmt_token->bind_param("is", $user_id, $token);
         $stmt_token->execute();
@@ -39,7 +39,7 @@ function addUserWithToken($name, $password, $email) {
 function getAllUsers() {
     global $conn;
 
-    $sql = "SELECT id, name, email, password FROM api_user";
+    $sql = "SELECT id, name, email, password FROM " . PREFIX . "user";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
@@ -69,11 +69,11 @@ function updateUser($id, $name, $email, $password = null) {
     if ($password !== null) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        $sql = "UPDATE api_user SET name=?, email=?, password=?, updated_at=? WHERE id=?";
+        $sql = "UPDATE " . PREFIX . "user SET name=?, email=?, password=?, updated_at=? WHERE id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ssssi", $name, $email, $hashed_password, $updated_at, $id);
     } else {
-        $sql = "UPDATE api_user SET name=?, email=?, updated_at=? WHERE id=?";
+        $sql = "UPDATE " . PREFIX . "user SET name=?, email=?, updated_at=? WHERE id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sssi", $name, $email, $updated_at, $id);
     }
@@ -91,22 +91,22 @@ function updateUser($id, $name, $email, $password = null) {
 function delUser($user_id) {
     global $conn;
 
-    $sql_delete_tokens = "DELETE FROM api_tokens WHERE user_id = ?";
+    $sql_delete_tokens = "DELETE FROM " . PREFIX . "tokens WHERE user_id = ?";
     $stmt_delete_tokens = $conn->prepare($sql_delete_tokens);
     $stmt_delete_tokens->bind_param("i", $user_id);
 
     if (!$stmt_delete_tokens->execute()) {
         http_response_code(500);
-        return array("error" => "Erro ao excluir os tokens do usuário da tabela api_tokens: " . $conn->error);
+        return array("error" => "Erro ao excluir os tokens do usuário da tabela " . PREFIX . "tokens: " . $conn->error);
     }
 
-    $sql_delete_user = "DELETE FROM api_user WHERE id = ?";
+    $sql_delete_user = "DELETE FROM " . PREFIX . "user WHERE id = ?";
     $stmt_delete_user = $conn->prepare($sql_delete_user);
     $stmt_delete_user->bind_param("i", $user_id);
 
     if (!$stmt_delete_user->execute()) {
         http_response_code(500);
-        return array("error" => "Erro ao excluir o usuário da tabela api_user: " . $conn->error);
+        return array("error" => "Erro ao excluir o usuário da tabela " . PREFIX . "user: " . $conn->error);
     }
 
     $conn->close();
@@ -117,7 +117,7 @@ function delUser($user_id) {
 function loginUser($email, $password) {
     global $conn;
 
-    $sql = "SELECT id, name, password FROM api_user WHERE email = ?";
+    $sql = "SELECT id, name, password FROM " . PREFIX . "user WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
     $stmt->execute();

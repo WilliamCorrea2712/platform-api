@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../mysql/conn.php';
+require_once __DIR__ . '/../config.php';
+
 
 function existsInTable($table, $column, $value) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) AS total FROM $table WHERE $column = ?";
+    $sql = "SELECT COUNT(*) AS total FROM " . PREFIX . "$table WHERE $column = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $value);
     $stmt->execute();
@@ -14,25 +16,25 @@ function existsInTable($table, $column, $value) {
 }
 
 function customerExists($customer_id) {
-    return existsInTable('api_customers', 'id', $customer_id);
+    return existsInTable('customers', 'id', $customer_id);
 }
 
 function customerExistsByEmail($email) {
-    return existsInTable('api_customers', 'email', $email);
+    return existsInTable('customers', 'email', $email);
 }
 
 function userExists($name, $email) {
-    return existsInTable('api_user', 'name', $name) || userEmailExists($email);
+    return existsInTable('user', 'name', $name) || userEmailExists($email);
 }
 
 function userEmailExists($email) {
-    return existsInTable('api_user', 'email', $email);
+    return existsInTable('user', 'email', $email);
 }
 
 function addressExists($address_id) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) AS total FROM api_addresses WHERE id = ?";
+    $sql = "SELECT COUNT(*) AS total FROM " . PREFIX . "addresses WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $address_id);
     $stmt->execute();
@@ -121,7 +123,7 @@ function isValidTypePerson($type_person) {
 function cpfExists($cpf, $customer_id = null) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) as count FROM api_customers WHERE cnpj_cpf = ?";
+    $sql = "SELECT COUNT(*) as count FROM " . PREFIX . "customers WHERE cnpj_cpf = ?";
 
     if ($customer_id !== null) {
         $sql .= " AND id <> ?";

@@ -5,7 +5,7 @@
 
     $payload = json_decode(base64_decode($token_parts[1]));
 
-    $expiration_timestamp = $payload->expiration;
+    $expiration_timestamp = $payload->exp;
 
     $current_timestamp = time();
     if ($current_timestamp < $expiration_timestamp) {
