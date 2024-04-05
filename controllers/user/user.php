@@ -1,14 +1,28 @@
 <?php
-require_once __DIR__ . '/../models/user.php'; 
+require_once __DIR__ . '/../../models/user/user.php'; 
 
 function addUser() {
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        if (isset($_POST['name']) && isset($_POST['password'])) {
+        if (isset($_POST['name']) && isset($_POST['password']) && isset($_POST['email'])) {
             $name = $_POST['name'];
             $password = $_POST['password'];
+            $email = $_POST['email'];
 
-            $result = addUserWithToken($name, $password);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                http_response_code(400);
+                echo json_encode(array("message" => "O formato do email é inválido."), JSON_UNESCAPED_UNICODE);
+                exit;
+            }
 
+            if (strlen($password) < 6) {
+                http_response_code(400);
+                echo json_encode(array("message" => "A senha deve ter pelo menos 6 caracteres."), JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            $result = addUserWithToken($name, $password, $email);
+
+            http_response_code(200);
             echo json_encode($result);
         } else {
             http_response_code(400);
@@ -26,9 +40,10 @@ function getUsers() {
 
 function editUser($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "POST") { 
-        if (isset($_POST['id']) && isset($_POST['name'])) {
+        if (isset($_POST['id']) && isset($_POST['name']) && isset($_POST['email'])) {
             $id = $_POST['id'];
             $name = $_POST['name'];
+            $email = $_POST['email'];
 
             if(isset($_POST['password'])){
                 $password = $_POST['password'];
@@ -42,7 +57,9 @@ function editUser($user_id) {
                 exit;
             }
 
-            $result = updateUser($id, $name, $password);
+            $result = updateUser($id, $name, $email, $password);
+
+            http_response_code(200);
             echo json_encode($result, JSON_UNESCAPED_UNICODE);
 
         } else {
@@ -67,10 +84,32 @@ function deleteUser($user_id){
             }
 
             $result = delUser($id);
+
+            http_response_code(200);
             echo json_encode($result, JSON_UNESCAPED_UNICODE);
         } else {
             http_response_code(400);
             echo json_encode(array("message" => "ID do usuário não fornecido."), JSON_UNESCAPED_UNICODE);
+        }
+    } else {
+        http_response_code(405);
+        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+    }
+}
+
+function login() {
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (isset($_POST['email']) && isset($_POST['password'])) {
+            $email = $_POST['email'];
+            $password = $_POST['password'];
+
+            $result = loginUser($email, $password);
+
+            http_response_code(200);
+            echo json_encode($result);
+        } else {
+            http_response_code(400);
+            echo json_encode(array("message" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
         }
     } else {
         http_response_code(405);

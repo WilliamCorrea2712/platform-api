@@ -1,24 +1,24 @@
 <?php
-require_once __DIR__ . '/../mysql/conn.php';
-require_once __DIR__ . '/../security/token.php';
+require_once __DIR__ . '/../../mysql/conn.php';
+require_once __DIR__ . '/../../security/token.php';
 date_default_timezone_set('America/Sao_Paulo');
 
-function userExists($name) {
+function userExists($name, $email) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) AS total FROM api_user WHERE name = ?";
+    $sql = "SELECT COUNT(*) AS total FROM api_user WHERE name = ? OR email = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $name);
+    $stmt->bind_param("ss", $name, $email);
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
     return $row['total'] > 0;
 }
 
-function addUserWithToken($name, $password) {
+function addUserWithToken($name, $password, $email) {
     global $conn;
 
-    if (userExists($name)) {
+    if (userExists($name, $email)) {
         http_response_code(400);
         return array("error" => "Usuário já existe.");
     }
@@ -26,9 +26,9 @@ function addUserWithToken($name, $password) {
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $created_at = date('Y-m-d H:i:s');
 
-    $sql = "INSERT INTO api_user (name, password, created_at) VALUES (?, ?, ?)";
+    $sql = "INSERT INTO api_user (name, password, email, created_at) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sss", $name, $hashed_password, $created_at);
+    $stmt->bind_param("ssss", $name, $hashed_password, $email, $created_at);
 
     if ($stmt->execute()) {
         $user_id = $stmt->insert_id;
@@ -47,11 +47,10 @@ function addUserWithToken($name, $password) {
     }
 }
 
-
 function getAllUsers() {
     global $conn;
 
-    $sql = "SELECT id, name, password FROM api_user";
+    $sql = "SELECT id, name, email, password FROM api_user";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
@@ -61,6 +60,7 @@ function getAllUsers() {
             $users[] = array(
                 'id' => $row['id'],
                 'name' => $row['name'],
+                'email' => $row['email'],
             );
         }
 
@@ -72,7 +72,7 @@ function getAllUsers() {
     }
 }
 
-function updateUser($id, $name, $password = null) {
+function updateUser($id, $name, $email, $password = null) {
     global $conn;
 
     $updated_at = date('Y-m-d H:i:s');
@@ -80,13 +80,13 @@ function updateUser($id, $name, $password = null) {
     if ($password !== null) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        $sql = "UPDATE api_user SET name=?, password=?, updated_at=? WHERE id=?";
+        $sql = "UPDATE api_user SET name=?, email=?, password=?, updated_at=? WHERE id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssi", $name, $hashed_password, $updated_at, $id);
+        $stmt->bind_param("ssssi", $name, $email, $hashed_password, $updated_at, $id);
     } else {
-        $sql = "UPDATE api_user SET name=?, updated_at=? WHERE id=?";
+        $sql = "UPDATE api_user SET name=?, email=?, updated_at=? WHERE id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssi", $name, $updated_at, $id);
+        $stmt->bind_param("sssi", $name, $email, $updated_at, $id);
     }
 
     if ($stmt->execute()) {
@@ -123,5 +123,44 @@ function delUser($user_id) {
     $conn->close();
     http_response_code(200);
     return array("message" => "Usuário excluído com sucesso.");
+}
+
+function userEmailExists($email) {
+    global $conn;
+
+    $sql = "SELECT COUNT(*) AS total FROM api_user WHERE email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total'] > 0;
+}
+
+function loginUser($email, $password) {
+    global $conn;
+
+    $sql = "SELECT id, name, password FROM api_user WHERE email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        $hashed_password = $user['password'];
+
+        if (password_verify($password, $hashed_password)) {
+            $user_id = $user['id'];
+            $token = generateToken($user_id);
+            return array("user_id" => $user_id, "token" => $token);
+        } else {
+            http_response_code(401);
+            return array("error" => "Senha incorreta.");
+        }
+    } else {
+        http_response_code(404);
+        return array("error" => "E-mail nao encontrado.", );
+    }
 }
 ?>
