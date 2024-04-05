@@ -39,14 +39,15 @@ function getUsers() {
 }
 
 function editUser($user_id) {
-    if ($_SERVER["REQUEST_METHOD"] == "POST") { 
-        if (isset($_POST['id']) && isset($_POST['name']) && isset($_POST['email'])) {
-            $id = $_POST['id'];
-            $name = $_POST['name'];
-            $email = $_POST['email'];
+    if ($_SERVER["REQUEST_METHOD"] == "PATCH") { 
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (isset($data['id']) && isset($data['name']) && isset($data['email'])) {
+            $id = $data['id'];
+            $name = $data['name'];
+            $email = $data['email'];
 
-            if(isset($_POST['password'])){
-                $password = $_POST['password'];
+            if(isset($data['password'])){
+                $password = $data['password'];
             } else {
                 $password = null;
             }
@@ -73,9 +74,11 @@ function editUser($user_id) {
 }
 
 function deleteUser($user_id){
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        if (isset($_POST['id'])) {
-            $id = $_POST['id'];
+    if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
+        $data = json_decode(file_get_contents("php://input"), true);
+        
+        if (isset($data['id'])) {
+            $id = $data['id'];
 
             if ((int)$id != $user_id) {
                 http_response_code(401);

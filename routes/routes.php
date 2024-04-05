@@ -26,8 +26,14 @@ require_once __DIR__ . "/../security/token.php";
       require_once __DIR__ . "/../controllers/user/user.php";
     }
 
-    if(strpos($route, "user/addUser") !== false || strpos($route, "account/addCustomer") !== false || strpos($route, "account/addAddress") !== false){
+    if(strpos($route, "user/addUser") !== false){
       $handler();
+    } else if(strpos($route, "account/getCustomers") !== false){
+      if (isset($_GET['id'])){
+          $handler($_GET['id']);
+      } else{
+          $handler();
+      }
     } else {
       $user_id = verifyToken()->user_id;
 

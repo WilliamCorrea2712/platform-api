@@ -28,4 +28,17 @@ function userExists($name, $email) {
 function userEmailExists($email) {
     return existsInTable('api_user', 'email', $email);
 }
+
+function addressExists($address_id) {
+    global $conn;
+
+    $sql = "SELECT COUNT(*) AS total FROM api_addresses WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $address_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    return $row['total'] > 0;
+}
+
 ?>
