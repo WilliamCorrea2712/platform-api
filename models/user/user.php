@@ -1,19 +1,8 @@
 <?php
 require_once __DIR__ . '/../../mysql/conn.php';
+require_once __DIR__ . '/../../global/helpers.php';
 require_once __DIR__ . '/../../security/token.php';
 date_default_timezone_set('America/Sao_Paulo');
-
-function userExists($name, $email) {
-    global $conn;
-
-    $sql = "SELECT COUNT(*) AS total FROM api_user WHERE name = ? OR email = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $name, $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    return $row['total'] > 0;
-}
 
 function addUserWithToken($name, $password, $email) {
     global $conn;
@@ -123,18 +112,6 @@ function delUser($user_id) {
     $conn->close();
     http_response_code(200);
     return array("message" => "Usuário excluído com sucesso.");
-}
-
-function userEmailExists($email) {
-    global $conn;
-
-    $sql = "SELECT COUNT(*) AS total FROM api_user WHERE email = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    return $row['total'] > 0;
 }
 
 function loginUser($email, $password) {

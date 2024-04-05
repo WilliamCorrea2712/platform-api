@@ -21,7 +21,7 @@ require_once __DIR__ . "/../security/token.php";
     $handler = $routes[$route];
 
     if (strpos($route, "account/") === 0) {
-      require_once __DIR__ . "/../controllers/account/customer.php";
+      require_once __DIR__ . "/../controllers/account/account.php";
     } else if(strpos($route, "user/") === 0) {
       require_once __DIR__ . "/../controllers/user/user.php";
     }
@@ -30,7 +30,7 @@ require_once __DIR__ . "/../security/token.php";
       $handler();
     } else {
       $user_id = verifyToken()->user_id;
-      
+
       if(isset($user_id) && $user_id > 0){
         $handler($user_id);
       } else {
