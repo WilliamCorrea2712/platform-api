@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../mysql/conn.php';
 require_once __DIR__ . '/../../global/logs.php';
 
-function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $user_id) {
+function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id) {
     global $conn;
 
     if (customerExistsByEmail($email)) {
@@ -10,9 +10,9 @@ function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $user_
         return json_encode(array("error" => "O cliente com o email fornecido já existe."), JSON_UNESCAPED_UNICODE);
     }
 
-    $sql = "INSERT INTO api_customers (name, email, phone_number, birth_date, created_by_user_id) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO api_customers (name, email, phone_number, birth_date, cnpj_cpf, rg_ie, type_person, sex, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssss", $name, $email, $phone_number, $birth_date, $user_id);
+    $stmt->bind_param("ssssssssi", $name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id);
 
     if ($stmt->execute()) {
         http_response_code(200);
@@ -27,7 +27,9 @@ function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $user_
 function getAllCustomers($customer_id = null) {
     global $conn;
 
-    $sql = "SELECT c.id, c.name, c.email, c.phone_number, c.birth_date, c.status, a.id as address_id, a.street, a.city, a.state, a.zip_code 
+    $sql = "SELECT c.id, c.name, c.email, c.phone_number, c.birth_date, c.status, 
+                   c.cnpj_cpf, c.rg_ie, c.type_person, c.sex, 
+                   a.id as address_id, a.street, a.city, a.state, a.zip_code 
             FROM api_customers c
             LEFT JOIN api_addresses a ON c.id = a.customer_id";
 
@@ -58,6 +60,10 @@ function getAllCustomers($customer_id = null) {
                     'phone_number' => $row['phone_number'],
                     'birth_date' => $row['birth_date'],
                     'status' => $row['status'],
+                    'cnpj_cpf' => $row['cnpj_cpf'],
+                    'rg_ie' => $row['rg_ie'],
+                    'type_person' => $row['type_person'],
+                    'sex' => $row['sex'],
                     'addresses' => array()
                 );
             }
@@ -84,7 +90,7 @@ function getAllCustomers($customer_id = null) {
 }
 
 
-function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date) {
+function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex) {
     global $conn;
 
     if (!customerExists($customer_id)) {
@@ -105,6 +111,22 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
     if ($birth_date !== null) {
         $sql .= "birth_date = ?, ";
         $params[] = $birth_date;
+    }
+    if ($cnpj_cpf !== null) {
+        $sql .= "cnpj_cpf = ?, ";
+        $params[] = $cnpj_cpf;
+    }
+    if ($rg_ie !== null) {
+        $sql .= "rg_ie = ?, ";
+        $params[] = $rg_ie;
+    }
+    if ($type_person !== null) {
+        $sql .= "type_person = ?, ";
+        $params[] = $type_person;
+    }
+    if ($sex !== null) {
+        $sql .= "sex = ?, ";
+        $params[] = $sex;
     }
 
     $sql = rtrim($sql, ", ");
@@ -132,7 +154,6 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
         return array("status" => 500, "response" => array("error" => "Erro ao atualizar o cliente: " . $conn->error));
     }
 }
-
 
 function deleteCustomerFromDatabase($user_id, $customer_id) {
     global $conn;
@@ -172,8 +193,7 @@ function deleteCustomerFromDatabase($user_id, $customer_id) {
     $stmt_delete_customer->close();
 }
 
-
-function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $user_id) {
+function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $name, $number, $country, $user_id) {
     global $conn;
 
     if (!customerExists($customer_id)) {
@@ -183,9 +203,9 @@ function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $
 
     $created_at = date('Y-m-d H:i:s');
 
-    $sql = "INSERT INTO api_addresses (customer_id, street, city, state, zip_code, created_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO api_addresses (customer_id, street, city, state, zip_code, name, number, country, created_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("issssss", $customer_id, $street, $city, $state, $zip_code, $created_at, $user_id);
+    $stmt->bind_param("issssssssi", $customer_id, $street, $city, $state, $zip_code, $name, $number, $country, $created_at, $user_id);
 
     if ($stmt->execute()) {
         $address_id = $stmt->insert_id;
@@ -197,7 +217,7 @@ function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $
     }
 }
 
-function editAddressInDatabase($user_id, $address_id, $street = null, $city = null, $state = null, $zip_code = null) {
+function editAddressInDatabase($user_id, $address_id, $street = null, $city = null, $state = null, $zip_code = null, $name = null, $number = null, $country = null) {
     global $conn;
 
     if (!addressExists($address_id)) {
@@ -222,8 +242,20 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
         $sql .= "zip_code = ?, ";
         $params[] = $zip_code;
     }
-    
-    $sql .= "updated_at = NOW(), update_by_user_id = ? WHERE id = ?";
+    if ($name !== null) {
+        $sql .= "name = ?, ";
+        $params[] = $name;
+    }
+    if ($number !== null) {
+        $sql .= "number = ?, ";
+        $params[] = $number;
+    }
+    if ($country !== null) {
+        $sql .= "country = ?, ";
+        $params[] = $country;
+    }
+
+    $sql .= "updated_at = NOW(), updated_by_user_id = ? WHERE id = ?";
     $params[] = $user_id;
     $params[] = $address_id;
 
@@ -231,7 +263,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     if (!$stmt) {
         return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
     }
-    
+
     $bind_types = str_repeat("s", count($params));
     $stmt->bind_param($bind_types, ...$params);
     $success = $stmt->execute();
@@ -241,11 +273,12 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     } else {
         return array("status" => 500, "response" => array("error" => "Erro ao atualizar endereço: " . $stmt->error));
     }
+    
     $stmt->close();
     $conn->close();
 }
 
-function deleteAddressFromDatabase($user_id, $address_id) {
+function deleteAddressFromDatabase($address_id) {
     global $conn;
 
     $sql = "DELETE FROM api_addresses WHERE id = ?";
