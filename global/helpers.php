@@ -149,9 +149,23 @@ function cpfExists($cpf, $customer_id = null) {
 function categoryExists($category_id) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) AS count FROM api_category WHERE category_id = ?";
+    $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . "category WHERE category_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $category_id);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return $count > 0;
+}
+
+function brandExists($brand_id) {
+    global $conn;
+
+    $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . "brand WHERE brand_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $brand_id);
     $stmt->execute();
     $stmt->bind_result($count);
     $stmt->fetch();

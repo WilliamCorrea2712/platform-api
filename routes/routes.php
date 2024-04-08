@@ -23,6 +23,10 @@ date_default_timezone_set('America/Sao_Paulo');
     "product/editCategory" => "editCategory",
     "product/deleteCategory" => "deleteCategory",
     "product/getCategories" => "getCategories",
+    "product/addBrand" => "addBrand",
+    "product/editBrand" => "editBrand",
+    "product/deleteBrand" => "deleteBrand",
+    "product/getBrands" => "getBrands",
   );
 
   if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -36,11 +40,15 @@ date_default_timezone_set('America/Sao_Paulo');
     } else if (strpos($route, "product/") === 0) {
       require_once __DIR__ . "/../controllers/product/product.php";
       require_once __DIR__ . "/../controllers/product/category.php";
+      require_once __DIR__ . "/../controllers/product/brand.php";
     }
 
     if(strpos($route, "user/addUser") !== false){
       $handler();
-    } else if(strpos($route, "account/getCustomers") !== false || strpos($route, "product/getCategories") !== false){
+    } else if(strpos($route, "account/getCustomers") !== false || 
+              strpos($route, "product/getCategories") !== false || 
+              strpos($route, "product/getBrands") !== false){
+
       if (isset($_GET['id'])){
           $handler($_GET['id']);
       } else{

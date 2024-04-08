@@ -1,0 +1,207 @@
+<?php
+require_once __DIR__ . "/../../mysql/conn.php";
+require_once __DIR__ . '/../../global/helpers.php';
+require_once __DIR__ . '/../../global/logs.php';
+require_once(__DIR__ . '/../../config.php');
+
+function addBrandToDatabase($user_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
+  global $conn;
+
+  $sql = "INSERT INTO " . PREFIX . "brand (image, sort_order, status, created_by_user_id) VALUES (?, ?, ?, ?)";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("sisi", $image, $sort_order, $status, $user_id);
+  $stmt->execute();
+
+  if ($stmt->affected_rows > 0) {
+      $brand_id = $stmt->insert_id;
+
+      $sql = "INSERT INTO " . PREFIX . "brand_description (brand_id, name, description, meta_title, meta_description, meta_keyword) VALUES (?, ?, ?, ?, ?, ?)";
+      $stmt = $conn->prepare($sql);
+      $stmt->bind_param("isssss", $brand_id, $name, $description, $meta_title, $meta_description, $meta_keyword);
+      $stmt->execute();
+
+      if ($stmt->affected_rows > 0) {
+          $stmt->close();
+          $conn->close();
+          return $brand_id;
+      } else {
+          $stmt->close();
+          $conn->close();
+          return "Erro ao inserir na tabela " . PREFIX . "brand_description.";
+      }
+  } else {
+      $stmt->close();
+      $conn->close();
+      return "Erro ao inserir na tabela " . PREFIX . "brand.";
+  }
+}
+
+function getAllBrands($brand_id = null) {
+  global $conn;
+
+  $sql = "SELECT c.*, cd.name, cd.description, cd.meta_title, cd.meta_description, cd.meta_keyword
+          FROM " . PREFIX . "brand c
+          LEFT JOIN " . PREFIX . "brand_description cd ON c.brand_id = cd.brand_id ";
+
+  if ($brand_id !== null) {
+      $sql .= " WHERE c.brand_id = ?";
+  }
+
+  $stmt = $conn->prepare($sql);
+
+  if ($brand_id !== null) {
+      $stmt->bind_param("i", $brand_id);
+  }
+
+  if (!$stmt->execute()) {
+      http_response_code(500);
+      echo json_encode(array("error" => "Erro ao buscar marcas: " . $conn->error), JSON_UNESCAPED_UNICODE);
+      return;
+  }
+
+  $result = $stmt->get_result();
+  $brands = array();
+
+  while ($row = $result->fetch_assoc()) {
+      $brand_id = $row['brand_id'];
+
+      $brands[$brand_id] = array(
+          'brand_id' => $brand_id,
+          'image' => $row['image'],
+          'sort_order' => $row['sort_order'],
+          'status' => $row['status'],
+          'created_at' => $row['created_at'],
+          'updated_at' => $row['updated_at'],
+          'description' => $row['description'],
+          'meta_title' => $row['meta_title'],
+          'meta_description' => $row['meta_description'],
+          'meta_keyword' => $row['meta_keyword'],
+      );
+  }
+
+  http_response_code(200);
+  echo json_encode(array_values($brands), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+  $stmt->close();
+  $conn->close();
+}
+
+function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
+  global $conn;
+
+  $sql_brand = "UPDATE " . PREFIX . "brand SET ";
+  $params_brand = array();
+
+  if ($image !== null) {
+      $sql_brand .= "image = ?, ";
+      $params_brand[] = $image;
+  }
+  if ($sort_order !== null) {
+      $sql_brand .= "sort_order = ?, ";
+      $params_brand[] = $sort_order;
+  }
+  if ($status !== null) {
+      $sql_brand .= "status = ?, ";
+      $params_brand[] = $status;
+  }
+  $sql_brand .= "updated_by_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE brand_id = ?";
+  $params_brand[] = $user_id;
+  $params_brand[] = $brand_id;
+
+  $sql_brand = rtrim($sql_brand, ", ");
+
+  $stmt_brand = $conn->prepare($sql_brand);
+
+  if (!$stmt_brand) {
+      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+  }
+
+  $bind_types_brand = str_repeat("s", count($params_brand));
+
+  $stmt_brand->bind_param($bind_types_brand, ...$params_brand);
+
+  if (!$stmt_brand->execute()) {
+      $stmt_brand->close();
+      $conn->close();
+      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a marca na tabela " . PREFIX . "brand: " . $conn->error));
+  }
+
+  $stmt_brand->close();
+
+  $sql_description = "UPDATE " . PREFIX . "brand_description SET ";
+  $params_description = array();
+
+  if ($name !== null) {
+      $sql_description .= "name = ?, ";
+      $params_description[] = $name;
+  }
+  if ($description !== null) {
+      $sql_description .= "description = ?, ";
+      $params_description[] = $description;
+  }
+  if ($meta_title !== null) {
+      $sql_description .= "meta_title = ?, ";
+      $params_description[] = $meta_title;
+  }
+  if ($meta_description !== null) {
+      $sql_description .= "meta_description = ?, ";
+      $params_description[] = $meta_description;
+  }
+  if ($meta_keyword !== null) {
+      $sql_description .= "meta_keyword = ?, ";
+      $params_description[] = $meta_keyword;
+  }
+  $sql_description .= "updated_at = CURRENT_TIMESTAMP WHERE brand_id = ?";
+  $params_description[] = $brand_id;
+
+  $sql_description = rtrim($sql_description, ", ");
+
+  $stmt_description = $conn->prepare($sql_description);
+
+  if (!$stmt_description) {
+      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+  }
+
+  $bind_types_description = str_repeat("s", count($params_description));
+
+  $stmt_description->bind_param($bind_types_description, ...$params_description);
+
+  if (!$stmt_description->execute()) {
+      $stmt_description->close();
+      $conn->close();
+      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a marca na tabela " . PREFIX . "brand_description: " . $conn->error));
+  }
+
+  $stmt_description->close();
+  $conn->close();
+  
+  return array("status" => 200, "response" => array("message" => "marca atualizada com sucesso."));
+}
+
+function deleteBrandFromDatabase($user_id, $brand_id) {
+  global $conn;
+
+  $sql_description = "DELETE FROM " . PREFIX . "brand_description WHERE brand_id = ?";
+  $stmt_description = $conn->prepare($sql_description);
+  $stmt_description->bind_param("i", $brand_id);
+  $stmt_description->execute();
+  $stmt_description->close();
+
+  $sql_brand = "DELETE FROM " . PREFIX . "brand WHERE brand_id = ?";
+  $stmt_brand = $conn->prepare($sql_brand);
+  $stmt_brand->bind_param("i", $brand_id);
+  $stmt_brand->execute();
+
+  if ($stmt_brand->affected_rows > 0) {
+      insertLog($user_id, "brand_id=$brand_id", "deleted");
+
+      $stmt_brand->close();
+      $conn->close();
+      return array("status" => 200, "response" => array("message" => "marca excluída com sucesso."));
+  } else {
+      $stmt_brand->close();
+      $conn->close();
+      return array("status" => 500, "response" => array("error" => "Erro ao excluir a marca: " . $conn->error));
+  }
+}
+?>
