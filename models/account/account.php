@@ -172,7 +172,7 @@ function deleteCustomerFromDatabase($user_id, $customer_id) {
     $stmt_delete_customer->bind_param("i", $customer_id);
 
     if ($stmt_delete_customer->execute()) {
-        insertLog($user_id, $customer_id);
+        insertLog($user_id, "customer_id=$customer_id", "deleted");
 
         $deleted_addresses_ids = array();
         $deleted_addresses_query = "SELECT id FROM " . PREFIX . "addresses WHERE customer_id = ?";
@@ -279,7 +279,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     $conn->close();
 }
 
-function deleteAddressFromDatabase($address_id) {
+function deleteAddressFromDatabase($user_id, $address_id) {
     global $conn;
 
     $sql = "DELETE FROM " . PREFIX . "addresses WHERE id = ?";
@@ -287,6 +287,8 @@ function deleteAddressFromDatabase($address_id) {
     $stmt->bind_param("i", $address_id);
 
     if ($stmt->execute()) {
+        insertLog($user_id, "address_id=$address_id", "deleted");
+        
         return array("success" => true);
     } else {
         return array("success" => false, "error" => "Erro ao excluir endereço: " . $stmt->error);

@@ -79,7 +79,6 @@ function addCustomer($user_id) {
     }
 }
 
-
 function getCustomers($customer_id = null) {
     $result = getAllCustomers($customer_id);
 
@@ -88,7 +87,6 @@ function getCustomers($customer_id = null) {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 }
-
 
 function editCustomer($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "PATCH") { 

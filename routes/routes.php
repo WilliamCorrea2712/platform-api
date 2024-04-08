@@ -22,7 +22,7 @@ date_default_timezone_set('America/Sao_Paulo');
     "product/addCategory" => "addCategory",
     "product/editCategory" => "editCategory",
     "product/deleteCategory" => "deleteCategory",
-    "product/getCategory" => "getCategory",
+    "product/getCategories" => "getCategories",
   );
 
   if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -40,7 +40,7 @@ date_default_timezone_set('America/Sao_Paulo');
 
     if(strpos($route, "user/addUser") !== false){
       $handler();
-    } else if(strpos($route, "account/getCustomers") !== false){
+    } else if(strpos($route, "account/getCustomers") !== false || strpos($route, "product/getCategories") !== false){
       if (isset($_GET['id'])){
           $handler($_GET['id']);
       } else{

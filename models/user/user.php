@@ -7,11 +7,6 @@ require_once(__DIR__ . '/../../config.php');
 function addUserWithToken($name, $password, $email) {
     global $conn;
 
-    if (userExists($name, $email)) {
-        http_response_code(400);
-        return array("error" => "Usuário já existe.");
-    }
-
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     $created_at = date('Y-m-d H:i:s');
 

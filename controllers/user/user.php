@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../models/user/user.php'; 
+require_once __DIR__ . '/../../global/helpers.php';
 
 function addUser() {
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -7,6 +8,12 @@ function addUser() {
             $name = $_POST['name'];
             $password = $_POST['password'];
             $email = $_POST['email'];
+
+            if (userExists($name, $email)) {
+                http_response_code(400);
+                echo json_encode(array("error" => "Usuário já existe."), JSON_UNESCAPED_UNICODE);
+                exit;
+            }
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 http_response_code(400);

@@ -146,4 +146,18 @@ function cpfExists($cpf, $customer_id = null) {
     return $row['count'] > 0;
 }
 
+function categoryExists($category_id) {
+    global $conn;
+
+    $sql = "SELECT COUNT(*) AS count FROM api_category WHERE category_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $category_id);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return $count > 0;
+}
+
 ?>
