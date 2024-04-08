@@ -14,7 +14,15 @@ date_default_timezone_set('America/Sao_Paulo');
     "account/getCustomers" => "getCustomers",
     "account/addAddress" => "addAddress",
     "account/editAddress" => "editAddress",
-    "account/deleteAddress" => "deleteAddress"
+    "account/deleteAddress" => "deleteAddress",
+    "product/addProduct" => "addProduct",
+    "product/editProduct" => "editProduct",
+    "product/deleteProduct" => "deleteProduct",
+    "product/getProducts" => "getProducts",
+    "product/addCategory" => "addCategory",
+    "product/editCategory" => "editCategory",
+    "product/deleteCategory" => "deleteCategory",
+    "product/getCategory" => "getCategory",
   );
 
   if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -23,8 +31,11 @@ date_default_timezone_set('America/Sao_Paulo');
 
     if (strpos($route, "account/") === 0) {
       require_once __DIR__ . "/../controllers/account/account.php";
-    } else if(strpos($route, "user/") === 0) {
+    } else if (strpos($route, "user/") === 0) {
       require_once __DIR__ . "/../controllers/user/user.php";
+    } else if (strpos($route, "product/") === 0) {
+      require_once __DIR__ . "/../controllers/product/product.php";
+      require_once __DIR__ . "/../controllers/product/category.php";
     }
 
     if(strpos($route, "user/addUser") !== false){
