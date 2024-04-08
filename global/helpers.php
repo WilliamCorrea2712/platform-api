@@ -31,16 +31,30 @@ function userEmailExists($email) {
     return existsInTable('user', 'email', $email);
 }
 
-function addressExists($address_id) {
+function itemExists($table, $id_column, $item_id) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) AS total FROM " . PREFIX . "addresses WHERE id = ?";
+    $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . $table . " WHERE " . $id_column . " = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $address_id);
+    $stmt->bind_param("i", $item_id);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return $count > 0;
+}
+
+function getProductImages($product_id) {
+    global $conn;
+
+    $sql = "SELECT COUNT(*) AS total FROM " . PREFIX . "product_image WHERE product_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $product_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
-    return $row['total'] > 0;
+    return $row['total'] ;
 }
 
 function isValidCnpjCpf($cnpj_cpf) {
@@ -107,6 +121,7 @@ function isValidCnpjCpf($cnpj_cpf) {
     return false;
 }
 
+
 function isValidRgIe($rg_ie) {
     $rg_ie = preg_replace("/[^0-9]/", "", $rg_ie);
 
@@ -146,32 +161,36 @@ function cpfExists($cpf, $customer_id = null) {
     return $row['count'] > 0;
 }
 
-function categoryExists($category_id) {
+function imageExistsForProduct($product_id, $image_name) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . "category WHERE category_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $category_id);
+    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM " . PREFIX . "product_image WHERE product_id = ? AND name = ?");
+    $stmt->bind_param("is", $product_id, $image_name);
+
     $stmt->execute();
-    $stmt->bind_result($count);
-    $stmt->fetch();
+
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+
     $stmt->close();
 
-    return $count > 0;
+    return $row['total'] > 0;
 }
 
-function brandExists($brand_id) {
-    global $conn;
+function is_valid_image($file_tmp_name, $file_type) {
+    $allowed_types = array(
+        'image/jpeg',
+        'image/png',
+        'image/gif'
+    );
 
-    $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . "brand WHERE brand_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $brand_id);
-    $stmt->execute();
-    $stmt->bind_result($count);
-    $stmt->fetch();
-    $stmt->close();
+    if (in_array($file_type, $allowed_types)) {
+        if (getimagesize($file_tmp_name) !== false) {
+            return true;
+        }
+    }
 
-    return $count > 0;
+    return false;
 }
 
 ?>

@@ -18,6 +18,7 @@ date_default_timezone_set('America/Sao_Paulo');
     "product/addProduct" => "addProduct",
     "product/editProduct" => "editProduct",
     "product/deleteProduct" => "deleteProduct",
+    "product/addProductImages" => "addProductImages",
     "product/getProducts" => "getProducts",
     "product/addCategory" => "addCategory",
     "product/editCategory" => "editCategory",
@@ -47,7 +48,8 @@ date_default_timezone_set('America/Sao_Paulo');
       $handler();
     } else if(strpos($route, "account/getCustomers") !== false || 
               strpos($route, "product/getCategories") !== false || 
-              strpos($route, "product/getBrands") !== false){
+              strpos($route, "product/getBrands") !== false ||
+              strpos($route, "product/getProducts") !== false){
 
       if (isset($_GET['id'])){
           $handler($_GET['id']);

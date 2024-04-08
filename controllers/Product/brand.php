@@ -49,11 +49,11 @@ function editbrand($user_id) {
       if (isset($data['brand_id'])) {
           $brand_id = $data['brand_id'];
           
-          if (!brandExists($brand_id)) {
-              http_response_code(404);
-              echo json_encode(array("message" => "Marca não encontrada."), JSON_UNESCAPED_UNICODE);
-              return;
-          }
+        if (itemExists("brand", "brand_id", $brand_id)) {
+            http_response_code(404);
+            echo json_encode(array("message" => "Marca não encontrada."), JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
           if (count($data) <= 1) {
               http_response_code(400);
@@ -91,21 +91,21 @@ function deleteBrand($user_id) {
       if (isset($data['brand_id'])) {
           $brand_id = $data['brand_id'];
 
-          if (!brandExists($brand_id)) {
-              http_response_code(404);
-              echo json_encode(array("message" => "marca não encontrada."), JSON_UNESCAPED_UNICODE);
-              return;
-          }
+        if (itemExists("brand", "brand_id", $brand_id)) {
+            http_response_code(404);
+            echo json_encode(array("message" => "marca não encontrada."), JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
-          $result = deleteBrandFromDatabase($user_id, $brand_id);
+        $result = deleteBrandFromDatabase($user_id, $brand_id);
 
-          if ($result['status'] === 200) {
-              http_response_code(200);
-              echo json_encode(array("message" => "marca excluída com sucesso."), JSON_UNESCAPED_UNICODE);
-          } else {
-              http_response_code(500);
-              echo json_encode(array("error" => "Erro ao excluir marca: " . $result['response']['error']), JSON_UNESCAPED_UNICODE);
-          }
+        if ($result['status'] === 200) {
+            http_response_code(200);
+            echo json_encode(array("message" => "marca excluída com sucesso."), JSON_UNESCAPED_UNICODE);
+        } else {
+            http_response_code(500);
+            echo json_encode(array("error" => "Erro ao excluir marca: " . $result['response']['error']), JSON_UNESCAPED_UNICODE);
+        }
       } else {
           http_response_code(400);
           echo json_encode(array("message" => "ID da marca não fornecido."), JSON_UNESCAPED_UNICODE);

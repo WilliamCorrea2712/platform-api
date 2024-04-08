@@ -50,7 +50,7 @@ function editCategory($user_id) {
       if (isset($data['category_id'])) {
           $category_id = $data['category_id'];
           
-          if (!categoryExists($category_id)) {
+          if (itemExists("category", "category_id", $category_id)) {
               http_response_code(404);
               echo json_encode(array("message" => "Categoria não encontrada."), JSON_UNESCAPED_UNICODE);
               return;
@@ -93,7 +93,7 @@ function deleteCategory($user_id) {
       if (isset($data['category_id'])) {
           $category_id = $data['category_id'];
 
-          if (!categoryExists($category_id)) {
+          if (itemExists("category", "category_id", $category_id)) {
               http_response_code(404);
               echo json_encode(array("message" => "Categoria não encontrada."), JSON_UNESCAPED_UNICODE);
               return;

@@ -257,7 +257,7 @@ function editAddress($user_id) {
         if (isset($data['address_id'])) {
             $address_id = $data['address_id'];
             
-            if (!addressExists($address_id)) {
+            if (itemExists("addresses", "id", $address_id)) {
                 http_response_code(404);
                 echo json_encode(array("message" => "Endereço não encontrado."), JSON_UNESCAPED_UNICODE);
                 return;
@@ -304,7 +304,7 @@ function deleteAddress($user_id) {
         if (isset($data['address_id'])) {
             $address_id = $data['address_id'];
 
-            if (!addressExists($address_id)) {
+            if (itemExists("addresses", "id", $address_id)) {
                 http_response_code(404);
                 echo json_encode(array("message" => "Endereço não encontrado."), JSON_UNESCAPED_UNICODE);
                 return;

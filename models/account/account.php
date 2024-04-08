@@ -221,7 +221,7 @@ function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $
 function editAddressInDatabase($user_id, $address_id, $street = null, $city = null, $state = null, $zip_code = null, $name = null, $number = null, $country = null) {
     global $conn;
 
-    if (!addressExists($address_id)) {
+    if (!itemExists("addresses", "id", $address_id)) {
         return array("status" => 404, "response" => array("message" => "Endereço não encontrado."));
     }
 
