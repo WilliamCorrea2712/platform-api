@@ -158,7 +158,6 @@ function addProductImages($user_id) {
           }
 
           $upload_dir = __DIR__ . "/../../public/images/";
-
           $errors = array();
           $max_images = 5;
 
