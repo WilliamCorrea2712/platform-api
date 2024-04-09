@@ -30,6 +30,9 @@ date_default_timezone_set('America/Sao_Paulo');
     PRODUCT . "editBrand" => "editBrand",
     PRODUCT . "deleteBrand" => "deleteBrand",
     PRODUCT . "getBrands" => "getBrands",
+    PRODUCT . "addStockOptions" => "addStockOptions",
+    PRODUCT . "deleteStockOptions" => "deleteStockOptions",
+    PRODUCT . "getStockOptions" => "getStockOptions",
   );
 
   if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -44,6 +47,7 @@ date_default_timezone_set('America/Sao_Paulo');
       require_once __DIR__ . "/../controllers/product/product.php";
       require_once __DIR__ . "/../controllers/product/category.php";
       require_once __DIR__ . "/../controllers/product/brand.php";
+      require_once __DIR__ . "/../controllers/product/stock.php";
     }
 
     if(strpos($route, "user/addUser") !== false){

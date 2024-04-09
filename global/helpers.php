@@ -66,6 +66,19 @@ function getProductImages($product_id) {
     return $row['total'] ;
 }
 
+function checkStockTypeExists($type) {
+    global $conn;
+
+    $sql = "SELECT id FROM api_stock_types WHERE name = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $type);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $stmt->close();
+
+    return $result->num_rows > 0;
+}
+
 function isValidCnpjCpf($cnpj_cpf) {
     $cnpj_cpf = preg_replace("/[^0-9]/", "", $cnpj_cpf);
 
