@@ -8,8 +8,8 @@ function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $c
   global $conn;
 
   $sql = "INSERT INTO " . PREFIX . "product 
-          (brand_id, categories, price, cost_price, weight, length, width, height, sku, sort_order minimum, status, created_by_user_id, updated_by_user_id) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+          (brand_id, categories, price, cost_price, weight, length, width, height, sku, sort_order, minimum, status, created_by_user_id, updated_by_user_id) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("isdddddsiiiiii", $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $user_id, $user_id);
   
@@ -28,73 +28,86 @@ function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $c
       $stmt->close();
       $stmt_description->close();
       $conn->close();
-      return $product_id;
+      return createResponse("Produto adicionado com sucesso.", 201);
   } else {
       $stmt->close();
       $conn->close();
-      return "Erro ao inserir na tabela " . PREFIX . "product.";
+      return createResponse("Erro ao inserir na tabela " . PREFIX . "product.", 500);
   }
 }
 
 function getAllProducts($product_id = null) {
-  global $conn;
+    global $conn;
 
-  $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, pd.meta_description, pd.meta_keyword
-          FROM " . PREFIX . "product p
-          LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id";
+    $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, pd.meta_description, pd.meta_keyword
+            FROM " . PREFIX . "product p
+            LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id";
 
-  if ($product_id !== null) {
-      $sql .= " WHERE p.product_id = ?";
-  }
+    if ($product_id !== null) {
+        $sql .= " WHERE p.product_id = ?";
+    }
 
-  $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
-  if ($product_id !== null) {
-      $stmt->bind_param("i", $product_id);
-  }
+    if ($product_id !== null) {
+        $stmt->bind_param("i", $product_id);
+    }
 
-  if (!$stmt->execute()) {
-      http_response_code(500);
-      echo json_encode(array("error" => "Erro ao buscar produtos: " . $conn->error), JSON_UNESCAPED_UNICODE);
-      return;
-  }
+    if (!$stmt->execute()) {
+        return createResponse("Erro ao buscar produtos: " . $conn->error, 500);
+    }
 
-  $result = $stmt->get_result();
-  $products = array();
+    $result = $stmt->get_result();
+    $products = array();
 
-  while ($row = $result->fetch_assoc()) {
-      $product_id = $row['product_id'];
+    while ($row = $result->fetch_assoc()) {
+        $product_id = $row['product_id'];
 
-      $products[$product_id] = array(
-          'product_id' => $product_id,
-          'brand_id' => $row['brand_id'],
-          'categories' => json_decode($row['categories']),
-          'price' => $row['price'],
-          'cost_price' => $row['cost_price'],
-          'weight' => $row['weight'],
-          'length' => $row['length'],
-          'width' => $row['width'],
-          'height' => $row['height'],
-          'sku' => $row['sku'],
-          'sort_order' => $row['sort_order'],
-          'minimum' => $row['minimum'],
-          'status' => $row['status'],
-          'created_at' => $row['created_at'],
-          'updated_at' => $row['updated_at'],
-          'name' => $row['product_name'],
-          'description' => $row['product_description'],
-          'meta_title' => $row['meta_title'],
-          'meta_description' => $row['meta_description'],
-          'meta_keyword' => $row['meta_keyword'],
-      );
-  }
+        $sql_images = "SELECT image_id, url, name FROM " . PREFIX . "product_image WHERE product_id = ?";
+        $stmt_images = $conn->prepare($sql_images);
+        $stmt_images->bind_param("i", $product_id);
+        $stmt_images->execute();
+        $result_images = $stmt_images->get_result();
 
-  http_response_code(200);
-  echo json_encode(array_values($products), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $images = array();
+        while ($row_image = $result_images->fetch_assoc()) {
+            $images[] = array(
+                'image_id' => $row_image['image_id'],
+                'image_url' => $row_image['url'],
+                'image_name' => $row_image['name'],
+            );
+        }
 
-  $stmt->close();
-  $conn->close();
+        $products[$product_id] = array(
+            'product_id' => $product_id,
+            'brand_id' => $row['brand_id'],
+            'categories' => json_decode($row['categories']),
+            'price' => $row['price'],
+            'cost_price' => $row['cost_price'],
+            'weight' => $row['weight'],
+            'length' => $row['length'],
+            'width' => $row['width'],
+            'height' => $row['height'],
+            'sku' => $row['sku'],
+            'sort_order' => $row['sort_order'],
+            'minimum' => $row['minimum'],
+            'status' => $row['status'],
+            'created_at' => $row['created_at'],
+            'updated_at' => $row['updated_at'],
+            'name' => $row['product_name'],
+            'description' => $row['product_description'],
+            'meta_title' => $row['meta_title'],
+            'meta_description' => $row['meta_description'],
+            'meta_keyword' => $row['meta_keyword'],
+            'images' => $images,
+        );
+        
+        $stmt_images->close();
+    }
+
+    return createResponse($products, 200);
 }
+
 
 function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume) {
   global $conn;
@@ -159,7 +172,7 @@ function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $p
   $stmt_product = $conn->prepare($sql_product);
 
   if (!$stmt_product) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error), JSON_UNESCAPED_UNICODE);
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $bind_types_product = str_repeat("s", count($params_product));
@@ -168,8 +181,7 @@ function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $p
 
   if (!$stmt_product->execute()) {
       $stmt_product->close();
-      $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao atualizar o produto na tabela: " . $conn->error), JSON_UNESCAPED_UNICODE);
+      return createResponse("Erro ao atualizar o produto na tabela: " . $conn->error, 500);
   }
 
   $stmt_product->close();
@@ -213,7 +225,7 @@ function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $p
   $stmt_description = $conn->prepare($sql_description);
 
   if (!$stmt_description) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error), JSON_UNESCAPED_UNICODE);
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $bind_types_description = str_repeat("s", count($params_description));
@@ -222,14 +234,12 @@ function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $p
 
   if (!$stmt_description->execute()) {
       $stmt_description->close();
-      $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a descrição do produto na tabela: " . $conn->error), JSON_UNESCAPED_UNICODE);
+      return createResponse("Erro ao atualizar a descrição do produto na tabela: " . $conn->error, 500);
   }
 
   $stmt_description->close();
-  $conn->close();
   
-  return array("status" => 200, "response" => array("message" => "Produto atualizado com sucesso."), JSON_UNESCAPED_UNICODE);
+  return createResponse("Produto atualizado com sucesso.", 200);
 }
 
 function deleteProductFromDatabase($user_id, $product_id) {
@@ -243,8 +253,7 @@ function deleteProductFromDatabase($user_id, $product_id) {
 
   if ($stmt_description->affected_rows <= 0 && $stmt_description->errno != 0) {
       $stmt_description->close();
-      $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao excluir a descrição do produto."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Erro ao excluir a descrição do produto.", 500);
   }
 
   $sql_product = "DELETE FROM " . PREFIX . "product WHERE product_id = ? ";
@@ -256,12 +265,10 @@ function deleteProductFromDatabase($user_id, $product_id) {
   if ($stmt_product->affected_rows > 0) {
       insertLog($user_id, "product_id=$product_id", "deleted");
       $stmt_product->close();
-      $conn->close();
-      return array("status" => 200, "response" => array("message" => "Produto excluído com sucesso."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Produto excluído com sucesso.", 200);
   } else {
       $stmt_product->close();
-      $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao excluir o produto."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Erro ao excluir o produto.", 500);
   }
 }
 
@@ -280,20 +287,38 @@ function saveImageToDatabase($user_id, $product_id, $image_name, $image_url, $al
   $stmt = $conn->prepare($sql);
 
   if (!$stmt) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $stmt->bind_param("isssii", $product_id, $image_name, $image_url, $alt, $next_so, $user_id);
 
   if (!$stmt->execute()) {
       $stmt->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao salvar a imagem no banco de dados: " . $stmt->error));
+      return createResponse("Erro ao salvar a imagem no banco de dados: " . $stmt->error, 500);
   }
 
   $stmt->close();
 
-  return array("status" => 200, "response" => array("message" => "Imagem salva no banco de dados com sucesso."));
+  return createResponse("Imagem salva no banco de dados com sucesso.", 200);
+}
+
+function deleteProductImageFromDatabase($user_id, $product_id, $image_id) {
+    global $conn;
+
+    $sql = "DELETE FROM " . PREFIX . "product_image WHERE product_id = ? AND image_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $product_id, $image_id);
+
+    if ($stmt->execute()) {
+        insertLog($user_id, "image_id=$image_id", "deleted");
+        $stmt->close();
+        $conn->close();
+        return array("status" => 200, "response" => "Imagem do produto excluída com sucesso.");
+    } else {
+        $stmt->close();
+        $conn->close();
+        return array("status" => 500, "response" => "Erro ao excluir a imagem do produto: " . $conn->error);
+    }
 }
 
 ?>
-

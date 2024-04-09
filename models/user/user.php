@@ -24,10 +24,9 @@ function addUserWithToken($name, $password, $email) {
         $stmt_token->bind_param("is", $user_id, $token);
         $stmt_token->execute();
         $conn->close();
-        return array("user_id" => $user_id, "token" => $token);
+        return createResponse(array("user_id" => $user_id, "token" => $token), 201);
     } else {
-        http_response_code(500);
-        return array("error" => "Erro ao adicionar usuário: " . $stmt->error);
+        return createResponse("Erro ao adicionar usuário: " . $stmt->error, 500);
     }
 }
 
@@ -49,10 +48,9 @@ function getAllUsers() {
         }
 
         $conn->close();
-        http_response_code(200);
-        echo json_encode($users, JSON_PRETTY_PRINT);
+        return createResponse($users, 200);
     } else {
-        return array();
+        return createResponse(array(), 200);
     }
 }
 
@@ -75,11 +73,9 @@ function updateUser($id, $name, $email, $password = null) {
 
     if ($stmt->execute()) {
         $conn->close();
-        http_response_code(200);
-        return array("message" => "Dados do usuário atualizados com sucesso.");
+        return createResponse(array("message" => "Dados do usuário atualizados com sucesso."), 200);
     } else {
-        http_response_code(500);
-        return array("message" => "Erro ao atualizar os dados do usuário: " . $conn->error);
+        return createResponse("Erro ao atualizar os dados do usuário: " . $conn->error, 500);
     }
 }
 
@@ -91,8 +87,7 @@ function delUser($user_id) {
     $stmt_delete_tokens->bind_param("i", $user_id);
 
     if (!$stmt_delete_tokens->execute()) {
-        http_response_code(500);
-        return array("error" => "Erro ao excluir os tokens do usuário da tabela " . PREFIX . "tokens: " . $conn->error);
+        return createResponse("Erro ao excluir os tokens do usuário da tabela " . PREFIX . "tokens: " . $conn->error, 500);
     }
 
     $sql_delete_user = "DELETE FROM " . PREFIX . "user WHERE id = ?";
@@ -100,13 +95,11 @@ function delUser($user_id) {
     $stmt_delete_user->bind_param("i", $user_id);
 
     if (!$stmt_delete_user->execute()) {
-        http_response_code(500);
-        return array("error" => "Erro ao excluir o usuário da tabela " . PREFIX . "user: " . $conn->error);
+        return createResponse("Erro ao excluir o usuário da tabela " . PREFIX . "user: " . $conn->error, 500);
     }
 
     $conn->close();
-    http_response_code(200);
-    return array("message" => "Usuário excluído com sucesso.");
+    return createResponse(array("message" => "Usuário excluído com sucesso."), 200);
 }
 
 function loginUser($email, $password) {
@@ -125,14 +118,12 @@ function loginUser($email, $password) {
         if (password_verify($password, $hashed_password)) {
             $user_id = $user['id'];
             $token = generateToken($user_id);
-            return array("user_id" => $user_id, "token" => $token);
+            return createResponse(array("user_id" => $user_id, "token" => $token), 200);
         } else {
-            http_response_code(401);
-            return array("error" => "Senha incorreta.");
+            return createResponse("Senha incorreta.", 401);
         }
     } else {
-        http_response_code(404);
-        return array("error" => "E-mail nao encontrado.", );
+        return createResponse("E-mail não encontrado.", 404);
     }
 }
 ?>

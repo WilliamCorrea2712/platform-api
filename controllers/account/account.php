@@ -26,56 +26,40 @@ function addCustomer($user_id) {
             $sex = $data['sex'];
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O formato do email é inválido."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O formato do email é inválido.", 400);
             }
 
             if (!preg_match("/^\(\d{2}\)\s\d{4,5}-\d{4}$/", $phone_number)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O formato do número de telefone é inválido. O formato esperado é (XX) XXXX-XXXX."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O formato do número de telefone é inválido. O formato esperado é (XX) XXXX-XXXX.", 400);
             }
 
             if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $birth_date) || !strtotime($birth_date)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "A data de nascimento é inválida. O formato esperado é YYYY-MM-DD."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("A data de nascimento é inválida. O formato esperado é YYYY-MM-DD.", 400);
             }
 
             if (!isValidCnpjCpf($cnpj_cpf)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O CNPJ/CPF fornecido é inválido."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O CNPJ/CPF fornecido é inválido.", 400);
             }
 
             if (cpfExists($cnpj_cpf)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O CNPJ/CPF fornecido já existe em outra conta"), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O CNPJ/CPF fornecido já existe em outra conta", 400);
             }
 
             if (!isValidRgIe($rg_ie)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O RG/IE fornecido é inválido."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O RG/IE fornecido é inválido.", 400);
             }
 
             if (!isValidTypePerson($type_person)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O tipo de pessoa fornecido é inválido. Deve ser 'fisica' ou 'juridica'."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O tipo de pessoa fornecido é inválido. Deve ser 'fisica' ou 'juridica'.", 400);
             }
 
             $result = addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id);
-            echo $result;
+            return createResponse($result, 200);
         } else {
-            http_response_code(400);
-            echo json_encode(array("error" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
+            return createResponse("Dados incompletos.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("error" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -83,8 +67,9 @@ function getCustomers($customer_id = null) {
     $result = getAllCustomers($customer_id);
 
     if (!empty($result)) {
-        http_response_code(200);
-        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+        return createResponse($result, 200);
+    } else {
+        return createResponse("Nenhum cliente encontrado.", 404);
     }
 }
 
@@ -96,15 +81,11 @@ function editCustomer($user_id) {
             $customer_id = $data['customer_id'];
             
             if (!customerExists($customer_id)) {
-                http_response_code(404);
-                echo json_encode(array("message" => "Cliente não encontrado."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Cliente não encontrado.", 404);
             }
 
             if (count($data) <= 1) {
-                http_response_code(400);
-                echo json_encode(array("message" => "Nenhum dado a ser alterado foi fornecido."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Nenhum dado a ser alterado foi fornecido.", 400);
             }
 
             $name = isset($data['name']) ? $data['name'] : null;
@@ -117,60 +98,43 @@ function editCustomer($user_id) {
             $sex = isset($data['sex']) ? $data['sex'] : null;
 
             if ($phone_number !== null && !preg_match("/^\(\d{2}\)\s\d{4,5}-\d{4}$/", $phone_number)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O formato do número de telefone é inválido. O formato esperado é (XX) XXXX-XXXX."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O formato do número de telefone é inválido. O formato esperado é (XX) XXXX-XXXX.", 400);
             }
 
             if ($birth_date !== null && (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $birth_date) || !strtotime($birth_date))) {
-                http_response_code(400);
-                echo json_encode(array("error" => "A data de nascimento é inválida. O formato esperado é YYYY-MM-DD."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("A data de nascimento é inválida. O formato esperado é YYYY-MM-DD.", 400);
             }
 
             if ($cnpj_cpf !== null) {
                 if (!isValidCnpjCpf($cnpj_cpf)) {
-                    http_response_code(400);
-                    echo json_encode(array("error" => "O CNPJ/CPF fornecido é inválido."), JSON_UNESCAPED_UNICODE);
-                    return;
+                    return createResponse("O CNPJ/CPF fornecido é inválido.", 400);
                 }
             
                 if (cpfExists($cnpj_cpf, $customer_id)) {
-                    http_response_code(400);
-                    echo json_encode(array("error" => "O CNPJ/CPF fornecido já existe em outra conta."), JSON_UNESCAPED_UNICODE);
-                    return;
+                    return createResponse("O CNPJ/CPF fornecido já existe em outra conta.", 400);
                 }
             }
 
             if ($rg_ie !== null && !isValidRgIe($rg_ie)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O RG/IE fornecido é inválido."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O RG/IE fornecido é inválido.", 400);
             }
 
             if ($type_person !== null && !isValidTypePerson($type_person)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "O tipo de pessoa fornecido é inválido. Deve ser 'fisica' ou 'juridica'."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("O tipo de pessoa fornecido é inválido. Deve ser 'fisica' ou 'juridica'.", 400);
             }
 
             if ($email !== null) {
-                http_response_code(400);
-                echo json_encode(array("message" => "Não é permitido alterar o e-mail."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Não é permitido alterar o e-mail.", 400);
             }
 
             $result = editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex);
 
-            http_response_code($result['status']);
-            echo json_encode($result['response'], JSON_UNESCAPED_UNICODE);
+            return createResponse($result['response'], $result['status']);
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "O ID do cliente é obrigatório."), JSON_UNESCAPED_UNICODE);
+            return createResponse("O ID do cliente é obrigatório.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -182,27 +146,21 @@ function deleteCustomer($user_id) {
             $customer_id = $data['customer_id'];
 
             if (!customerExists($customer_id)) {
-                http_response_code(404);
-                echo json_encode(array("message" => "Cliente não encontrado."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Cliente não encontrado.", 404);
             }
 
             $result = deleteCustomerFromDatabase($user_id, $customer_id);
 
             if ($result['success']) {
-                http_response_code(200);
-                echo json_encode(array("message" => "Cliente excluído com sucesso."), JSON_UNESCAPED_UNICODE);
+                return createResponse("Cliente excluído com sucesso.", 200);
             } else {
-                http_response_code(500);
-                echo json_encode(array("error" => "Erro ao excluir cliente: " . $result['error']), JSON_UNESCAPED_UNICODE);
+                return createResponse("Erro ao excluir cliente: " . $result['error'], 500);
             }
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "ID do cliente não fornecido."), JSON_UNESCAPED_UNICODE);
+            return createResponse("ID do cliente não fornecido.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -230,22 +188,17 @@ function addAddress($user_id) {
             $country = $data['country'];
 
             if (!preg_match('/^\d{5}-\d{3}$/', $zip_code)) {
-                http_response_code(400);
-                echo json_encode(array("message" => "Formato inválido para o CEP. O formato esperado é XXXXX-XX"), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Formato inválido para o CEP. O formato esperado é XXXXX-XX", 400);
             }
 
             $result = addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $name, $number, $country, $user_id);
 
-            http_response_code(200);
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
+            return createResponse($result, 200);
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
+            return createResponse("Dados incompletos.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -257,16 +210,12 @@ function editAddress($user_id) {
         if (isset($data['address_id'])) {
             $address_id = $data['address_id'];
             
-            if (itemExists("addresses", "id", $address_id)) {
-                http_response_code(404);
-                echo json_encode(array("message" => "Endereço não encontrado."), JSON_UNESCAPED_UNICODE);
-                return;
+            if (!itemExists("addresses", "id", $address_id)) {
+                return createResponse("Endereço não encontrado.", 404);
             }
 
             if (count($data) <= 1) {
-                http_response_code(400);
-                echo json_encode(array("message" => "Nenhum dado a ser alterado foi fornecido."), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Nenhum dado a ser alterado foi fornecido.", 400);
             }
 
             $street = isset($data['street']) ? $data['street'] : null;
@@ -278,22 +227,17 @@ function editAddress($user_id) {
             $country = isset($data['country']) ? $data['country'] : null;
 
             if ($zip_code !== null && !preg_match('/^\d{5}-\d{3}$/', $zip_code)) {
-                http_response_code(400);
-                echo json_encode(array("message" => "Formato inválido para o CEP. O formato esperado é XXXXX-XX"), JSON_UNESCAPED_UNICODE);
-                return;
+                return createResponse("Formato inválido para o CEP. O formato esperado é XXXXX-XX", 400);
             }
 
             $result = editAddressInDatabase($user_id, $address_id, $street, $city, $state, $zip_code, $name, $number, $country);
 
-            http_response_code($result['status']);
-            echo json_encode($result['response'], JSON_UNESCAPED_UNICODE);
+            return createResponse($result['response'], $result['status']);
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "O ID do endereço é obrigatório."), JSON_UNESCAPED_UNICODE);
+            return createResponse("O ID do endereço é obrigatório.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -304,29 +248,22 @@ function deleteAddress($user_id) {
         if (isset($data['address_id'])) {
             $address_id = $data['address_id'];
 
-            if (itemExists("addresses", "id", $address_id)) {
-                http_response_code(404);
-                echo json_encode(array("message" => "Endereço não encontrado."), JSON_UNESCAPED_UNICODE);
-                return;
+            if (!itemExists("addresses", "id", $address_id)) {
+                return createResponse("Endereço não encontrado.", 404);
             }
 
             $result = deleteAddressFromDatabase($user_id, $address_id);
 
             if ($result['success']) {
-                http_response_code(200);
-                echo json_encode(array("message" => "Endereço excluído com sucesso."), JSON_UNESCAPED_UNICODE);
+                return createResponse("Endereço excluído com sucesso.", 200);
             } else {
-                http_response_code(500);
-                echo json_encode(array("error" => "Erro ao excluir endereço: " . $result['error']), JSON_UNESCAPED_UNICODE);
+                return createResponse("Erro ao excluir endereço: " . $result['error'], 500);
             }
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "ID do endereço não fornecido."), JSON_UNESCAPED_UNICODE);
+            return createResponse("ID do endereço não fornecido.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
-
 ?>

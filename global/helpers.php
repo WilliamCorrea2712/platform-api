@@ -2,6 +2,14 @@
 require_once __DIR__ . '/../mysql/conn.php';
 require_once __DIR__ . '/../config.php';
 
+function createResponse($message, $status) {
+    http_response_code($status);
+    if ($status >= 200 && $status < 400) {
+        echo json_encode(array("message" => $message), JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode(array("error" => $message), JSON_UNESCAPED_UNICODE);
+    }
+}
 
 function existsInTable($table, $column, $value) {
     global $conn;
@@ -35,6 +43,7 @@ function itemExists($table, $id_column, $item_id) {
     global $conn;
 
     $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . $table . " WHERE " . $id_column . " = ?";
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $item_id);
     $stmt->execute();

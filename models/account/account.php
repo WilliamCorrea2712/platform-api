@@ -7,8 +7,7 @@ function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_
     global $conn;
 
     if (customerExistsByEmail($email)) {
-        http_response_code(400);
-        return json_encode(array("error" => "O cliente com o email fornecido já existe."), JSON_UNESCAPED_UNICODE);
+        return createResponse("O cliente com o email fornecido já existe.", 400);
     }
 
     $sql = "INSERT INTO " . PREFIX . "customers (name, email, phone_number, birth_date, cnpj_cpf, rg_ie, type_person, sex, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -16,13 +15,10 @@ function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_
     $stmt->bind_param("ssssssssi", $name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id);
 
     if ($stmt->execute()) {
-        http_response_code(200);
-        return json_encode(array("message" => "Cliente adicionado com sucesso."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Cliente adicionado com sucesso.", 200);
     } else {
-        http_response_code(500);
-        return json_encode(array("error" => "Erro ao adicionar cliente: " . $stmt->error), JSON_UNESCAPED_UNICODE);
+        return createResponse("Erro ao adicionar cliente: " . $stmt->error, 500);
     }
-    $conn->close();
 }
 
 function getAllCustomers($customer_id = null) {
@@ -79,23 +75,17 @@ function getAllCustomers($customer_id = null) {
             }
         }
 
-        http_response_code(200);
-        echo json_encode(array_values($customers), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        return createResponse(array_values($customers), 200);
     } else {
-        http_response_code(404);
-        echo json_encode(array("message" => "Nenhum cliente encontrado."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Nenhum cliente encontrado.", 404);
     }
-    
-    $stmt->close();
-    $conn->close();
 }
-
 
 function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex) {
     global $conn;
 
     if (!customerExists($customer_id)) {
-        return array("status" => 404, "response" => array("message" => "Cliente não encontrado."));
+        return createResponse("Cliente não encontrado.", 404);
     }
 
     $sql = "UPDATE " . PREFIX . "customers SET ";
@@ -138,7 +128,7 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
     $stmt = $conn->prepare($sql);
 
     if (!$stmt) {
-        return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+        return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
     }
 
     $bind_types = str_repeat("s", count($params));
@@ -146,13 +136,9 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
     $stmt->bind_param($bind_types, ...$params);
 
     if ($stmt->execute()) {
-        $stmt->close();
-        $conn->close();
-        return array("status" => 200, "response" => array("message" => "Cliente atualizado com sucesso."));
+        return createResponse("Cliente atualizado com sucesso.", 200);
     } else {
-        $stmt->close();
-        $conn->close();
-        return array("status" => 500, "response" => array("error" => "Erro ao atualizar o cliente: " . $conn->error));
+        return createResponse("Erro ao atualizar o cliente: " . $conn->error, 500);
     }
 }
 
@@ -164,7 +150,7 @@ function deleteCustomerFromDatabase($user_id, $customer_id) {
     $stmt_delete_addresses->bind_param("i", $customer_id);
 
     if (!$stmt_delete_addresses->execute()) {
-        return array("success" => false, "error" => "Erro ao excluir endereços associados ao cliente: " . $stmt_delete_addresses->error);
+        return createResponse("Erro ao excluir endereços associados ao cliente: " . $stmt_delete_addresses->error, 500);
     }
 
     $sql_delete_customer = "DELETE FROM " . PREFIX . "customers WHERE id = ?";
@@ -185,21 +171,17 @@ function deleteCustomerFromDatabase($user_id, $customer_id) {
             $deleted_addresses_ids[] = $row['id'];
         }
 
-        return array("success" => true, "deleted_addresses_ids" => $deleted_addresses_ids);
+        return createResponse(array("deleted_addresses_ids" => $deleted_addresses_ids), 200);
     } else {
-        return array("success" => false, "error" => "Erro ao excluir cliente: " . $stmt_delete_customer->error);
+        return createResponse("Erro ao excluir cliente: " . $stmt_delete_customer->error, 500);
     }
-
-    $stmt_delete_addresses->close();
-    $stmt_delete_customer->close();
 }
 
 function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $name, $number, $country, $user_id) {
     global $conn;
 
     if (!customerExists($customer_id)) {
-        http_response_code(400);
-        return json_encode(array("error" => "O ID do cliente fornecido não existe."), JSON_UNESCAPED_UNICODE);
+        return createResponse("O ID do cliente fornecido não existe.", 400);
     }
 
     $created_at = date('Y-m-d H:i:s');
@@ -210,11 +192,9 @@ function addAddressToCustomer($customer_id, $street, $city, $state, $zip_code, $
 
     if ($stmt->execute()) {
         $address_id = $stmt->insert_id;
-        $conn->close();
-        return json_encode(array("address_id" => $address_id, "message" => "Endereço adicionado com sucesso."), JSON_UNESCAPED_UNICODE);
+        return createResponse(array("address_id" => $address_id, "message" => "Endereço adicionado com sucesso."), 200);
     } else {
-        http_response_code(500);
-        return json_encode(array("error" => "Erro ao adicionar endereço: " . $stmt->error), JSON_UNESCAPED_UNICODE);
+        return createResponse("Erro ao adicionar endereço: " . $stmt->error, 500);
     }
 }
 
@@ -222,7 +202,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     global $conn;
 
     if (!itemExists("addresses", "id", $address_id)) {
-        return array("status" => 404, "response" => array("message" => "Endereço não encontrado."));
+        return createResponse("Endereço não encontrado.", 404);
     }
 
     $sql = "UPDATE " . PREFIX . "addresses SET ";
@@ -262,7 +242,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+        return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
     }
 
     $bind_types = str_repeat("s", count($params));
@@ -270,13 +250,10 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     $success = $stmt->execute();
 
     if ($success) {
-        return array("status" => 200, "response" => array("message" => "Endereço atualizado com sucesso."));
+        return createResponse("Endereço atualizado com sucesso.", 200);
     } else {
-        return array("status" => 500, "response" => array("error" => "Erro ao atualizar endereço: " . $stmt->error));
+        return createResponse("Erro ao atualizar endereço: " . $stmt->error, 500);
     }
-    
-    $stmt->close();
-    $conn->close();
 }
 
 function deleteAddressFromDatabase($user_id, $address_id) {
@@ -288,12 +265,9 @@ function deleteAddressFromDatabase($user_id, $address_id) {
 
     if ($stmt->execute()) {
         insertLog($user_id, "address_id=$address_id", "deleted");
-        
-        return array("success" => true);
+        return createResponse(array("success" => true), 200);
     } else {
-        return array("success" => false, "error" => "Erro ao excluir endereço: " . $stmt->error);
+        return createResponse("Erro ao excluir endereço: " . $stmt->error, 500);
     }
-
-    $conn->close();
 }
 ?>

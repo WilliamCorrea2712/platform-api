@@ -35,19 +35,15 @@ function addProduct($user_id) {
           $product_id = addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
 
           if (is_numeric($product_id)) {
-              http_response_code(201);
-              echo json_encode(array("message" => "Produto adicionado com sucesso.", "product_id" => $product_id), JSON_UNESCAPED_UNICODE);
+              return createResponse("Produto adicionado com sucesso.", 201);
           } else {
-              http_response_code(500);
-              echo json_encode(array("error" => $product_id), JSON_UNESCAPED_UNICODE);
+              return createResponse($product_id, 500);
           }
       } else {
-          http_response_code(400);
-          echo json_encode(array("error" => "Os campos 'name', 'description', 'price' e 'weight' são obrigatórios."), JSON_UNESCAPED_UNICODE);
+          return createResponse("Os campos 'name', 'description', 'price' e 'weight' são obrigatórios.", 400);
       }
   } else {
-      http_response_code(405);
-      echo json_encode(array("error" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Método não permitido.", 405);
   }
 }
 
@@ -55,8 +51,7 @@ function getProducts($product_id = null) {
   $result = getAllProducts($product_id);
 
   if (!empty($result)) {
-      http_response_code(200);
-      echo json_encode($result, JSON_UNESCAPED_UNICODE);
+      return createResponse($result, 200);
   }
 }
 
@@ -67,16 +62,12 @@ function editProduct($user_id) {
       if (isset($data['product_id'])) {
           $product_id = $data['product_id'];
           
-          if (itemExists("product", "product_id", $product_id)) {
-              http_response_code(404);
-              echo json_encode(array("message" => "Produto não encontrado."), JSON_UNESCAPED_UNICODE);
-              return;
+          if (!itemExists("product", "product_id", $product_id)) {
+              return createResponse("Produto não encontrado.", 404);
           }
 
           if (count($data) <= 1) {
-              http_response_code(400);
-              echo json_encode(array("message" => "Nenhum dado a ser alterado foi fornecido."), JSON_UNESCAPED_UNICODE);
-              return;
+              return createResponse("Nenhum dado a ser alterado foi fornecido.", 400);
           }
 
           $brand_id = isset($data['brand_id']) ? $data['brand_id'] : null;
@@ -101,15 +92,12 @@ function editProduct($user_id) {
 
           $result = editProductInDatabase($user_id, $product_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
 
-          http_response_code($result['status']);
-          echo json_encode($result['response'], JSON_UNESCAPED_UNICODE);
+          return createResponse($result['response'], $result['status']);
       } else {
-          http_response_code(400);
-          echo json_encode(array("message" => "O ID do produto é obrigatório."), JSON_UNESCAPED_UNICODE);
+          return createResponse("O ID do produto é obrigatório.", 400);
       }
   } else {
-      http_response_code(405);
-      echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Método não permitido.", 405);
   }
 }
 
@@ -120,23 +108,18 @@ function deleteProduct($user_id) {
       if (isset($data['product_id'])) {
           $product_id = $data['product_id'];
           
-          if (itemExists("product", "product_id", $product_id)) {
-              http_response_code(404);
-              echo json_encode(array("message" => "Produto não encontrado."), JSON_UNESCAPED_UNICODE);
-              return;
+          if (!itemExists("product", "product_id", $product_id)) {
+              return createResponse("Produto não encontrado.", 404);
           }
 
           $result = deleteProductFromDatabase($user_id, $product_id);
 
-          http_response_code($result['status']);
-          echo json_encode($result['response'], JSON_UNESCAPED_UNICODE);
+          return createResponse($result['response'], $result['status']);
       } else {
-          http_response_code(400);
-          echo json_encode(array("message" => "O ID do produto é obrigatório."), JSON_UNESCAPED_UNICODE);
+          return createResponse("O ID do produto é obrigatório.", 400);
       }
   } else {
-      http_response_code(405);
-      echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Método não permitido.", 405);
   }
 }
 
@@ -145,16 +128,12 @@ function addProductImages($user_id) {
       if (isset($_POST['product_id'])) {
           $product_id = $_POST['product_id'];
 
-          if (itemExists("product", "product_id", $product_id)) {
-              http_response_code(404);
-              echo json_encode(array("error" => "O produto não foi encontrado."), JSON_UNESCAPED_UNICODE);
-              return;
+          if (!itemExists("product", "product_id", $product_id)) {
+              return createResponse("O produto não foi encontrado.", 404);
           }
 
           if (empty($_FILES['images'])) {
-              http_response_code(400);
-              echo json_encode(array("error" => "Nenhuma imagem foi enviada."), JSON_UNESCAPED_UNICODE);
-              return;
+              return createResponse("Nenhuma imagem foi enviada.", 400);
           }
 
           $upload_dir = __DIR__ . "/../../public/images/";
@@ -199,21 +178,39 @@ function addProductImages($user_id) {
           }
 
           if (!empty($errors)) {
-              http_response_code(500);
-              echo json_encode(array("error" => $errors), JSON_UNESCAPED_UNICODE);
-              return;
+              return createResponse($errors, 500);
           }
 
-          http_response_code(200);
-          echo json_encode(array("message" => "Imagens adicionadas com sucesso!"), JSON_UNESCAPED_UNICODE);
+          return createResponse("Imagens adicionadas com sucesso!", 200);
       } else {
-          http_response_code(400);
-          echo json_encode(array("error" => "O campo 'product_id' é obrigatório."), JSON_UNESCAPED_UNICODE);
+          return createResponse("O campo 'product_id' é obrigatório.", 400);
       }
   } else {
-      http_response_code(405);
-      echo json_encode(array("error" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+      return createResponse("Método não permitido.", 405);
   }
+}
+
+function deleteProductImages($user_id) {
+    if ($_SERVER["REQUEST_METHOD"] == "DELETE") { 
+        $data = json_decode(file_get_contents("php://input"), true);
+        
+        if (isset($data['product_id']) && isset($data['image_id'])) {
+            $product_id = $data['product_id'];
+            $image_id = $data['image_id'];
+            
+            if (!itemExists("product_image", "image_id", $image_id)) {
+                return createResponse("Imagem não encontrada.", 404);
+            }
+
+            $result = deleteProductImageFromDatabase($user_id, $product_id, $image_id);
+
+            return createResponse($result['response'], $result['status']);
+        } else {
+            return createResponse("O ID da imagem e o ID do produto são obrigatórios.", 400);
+        }
+    } else {
+        return createResponse("Método não permitido.", 405);
+    }
 }
 
 ?>

@@ -10,39 +10,36 @@ function addUser() {
             $email = $_POST['email'];
 
             if (userExists($name, $email)) {
-                http_response_code(400);
-                echo json_encode(array("error" => "Usuário já existe."), JSON_UNESCAPED_UNICODE);
-                exit;
+                return createResponse("Usuário já existe.", 400);
             }
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                http_response_code(400);
-                echo json_encode(array("message" => "O formato do email é inválido."), JSON_UNESCAPED_UNICODE);
-                exit;
+                return createResponse("O formato do email é inválido.", 400);
             }
 
             if (strlen($password) < 6) {
-                http_response_code(400);
-                echo json_encode(array("message" => "A senha deve ter pelo menos 6 caracteres."), JSON_UNESCAPED_UNICODE);
-                exit;
+                return createResponse("A senha deve ter pelo menos 6 caracteres.", 400);
             }
 
             $result = addUserWithToken($name, $password, $email);
 
-            http_response_code(200);
-            echo json_encode($result);
+            return createResponse($result, 200);
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
+            return createResponse("Dados incompletos.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
 function getUsers() {
-    return getAllUsers();
+    $users = getAllUsers();
+
+    if (!empty($users)) {
+        return createResponse($users, 200);
+    } else {
+        return createResponse("Nenhum usuário encontrado.", 404);
+    }
 }
 
 function editUser($user_id) {
@@ -60,23 +57,18 @@ function editUser($user_id) {
             }
 
             if ((int)$id != $user_id) {
-                http_response_code(401);
-                echo json_encode(array("message" => "Você não tem permissão para editar este usuário."), JSON_UNESCAPED_UNICODE);
-                exit;
+                return createResponse("Você não tem permissão para editar este usuário.", 401);
             }
 
             $result = updateUser($id, $name, $email, $password);
 
-            http_response_code(200);
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
+            return createResponse($result, 200);
 
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
+            return createResponse("Dados incompletos.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -88,22 +80,17 @@ function deleteUser($user_id){
             $id = $data['id'];
 
             if ((int)$id != $user_id) {
-                http_response_code(401);
-                echo json_encode(array("message" => "Você não tem permissão para excluir este usuário."), JSON_UNESCAPED_UNICODE);
-                exit;
+                return createResponse("Você não tem permissão para excluir este usuário.", 401);
             }
 
             $result = delUser($id);
 
-            http_response_code(200);
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
+            return createResponse($result, 200);
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "ID do usuário não fornecido."), JSON_UNESCAPED_UNICODE);
+            return createResponse("ID do usuário não fornecido.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 
@@ -115,15 +102,12 @@ function login() {
 
             $result = loginUser($email, $password);
 
-            http_response_code(200);
-            echo json_encode($result);
+            return createResponse($result, 200);
         } else {
-            http_response_code(400);
-            echo json_encode(array("message" => "Dados incompletos."), JSON_UNESCAPED_UNICODE);
+            return createResponse("Dados incompletos.", 400);
         }
     } else {
-        http_response_code(405);
-        echo json_encode(array("message" => "Método não permitido."), JSON_UNESCAPED_UNICODE);
+        return createResponse("Método não permitido.", 405);
     }
 }
 ?>

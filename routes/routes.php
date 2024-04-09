@@ -19,6 +19,7 @@ date_default_timezone_set('America/Sao_Paulo');
     "product/editProduct" => "editProduct",
     "product/deleteProduct" => "deleteProduct",
     "product/addProductImages" => "addProductImages",
+    "product/deleteProductImages" => "deleteProductImages",
     "product/getProducts" => "getProducts",
     "product/addCategory" => "addCategory",
     "product/editCategory" => "editCategory",

@@ -23,16 +23,16 @@ function addCategoryToDatabase($user_id, $name, $description, $image, $parent_id
       if ($stmt->affected_rows > 0) {
           $stmt->close();
           $conn->close();
-          return $category_id;
+          return createResponse("Categoria adicionada com sucesso.", 201);
       } else {
           $stmt->close();
           $conn->close();
-          return "Erro ao inserir na tabela " . PREFIX . "category_description.";
+          return createResponse("Erro ao inserir na tabela " . PREFIX . "category_description.", 500);
       }
   } else {
       $stmt->close();
       $conn->close();
-      return "Erro ao inserir na tabela " . PREFIX . "category.";
+      return createResponse("Erro ao inserir na tabela " . PREFIX . "category.", 500);
   }
 }
 
@@ -54,9 +54,7 @@ function getAllCategories($category_id = null) {
   }
 
   if (!$stmt->execute()) {
-      http_response_code(500);
-      echo json_encode(array("error" => "Erro ao buscar categorias: " . $conn->error), JSON_UNESCAPED_UNICODE);
-      return;
+      return createResponse("Erro ao buscar categorias: " . $conn->error, 500);
   }
 
   $result = $stmt->get_result();
@@ -80,11 +78,10 @@ function getAllCategories($category_id = null) {
       );
   }
 
-  http_response_code(200);
-  echo json_encode(array_values($categories), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
   $stmt->close();
   $conn->close();
+
+  return createResponse(array_values($categories), 200);
 }
 
 function editCategoryInDatabase($user_id, $category_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
@@ -118,7 +115,7 @@ function editCategoryInDatabase($user_id, $category_id, $name, $description, $im
   $stmt_category = $conn->prepare($sql_category);
 
   if (!$stmt_category) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $bind_types_category = str_repeat("s", count($params_category));
@@ -128,7 +125,7 @@ function editCategoryInDatabase($user_id, $category_id, $name, $description, $im
   if (!$stmt_category->execute()) {
       $stmt_category->close();
       $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a categoria na tabela api_category: " . $conn->error));
+      return createResponse("Erro ao atualizar a categoria na tabela api_category: " . $conn->error, 500);
   }
 
   $stmt_category->close();
@@ -164,7 +161,7 @@ function editCategoryInDatabase($user_id, $category_id, $name, $description, $im
   $stmt_description = $conn->prepare($sql_description);
 
   if (!$stmt_description) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $bind_types_description = str_repeat("s", count($params_description));
@@ -174,13 +171,13 @@ function editCategoryInDatabase($user_id, $category_id, $name, $description, $im
   if (!$stmt_description->execute()) {
       $stmt_description->close();
       $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a categoria na tabela api_category_description: " . $conn->error));
+      return createResponse("Erro ao atualizar a categoria na tabela api_category_description: " . $conn->error, 500);
   }
 
   $stmt_description->close();
   $conn->close();
   
-  return array("status" => 200, "response" => array("message" => "Categoria atualizada com sucesso."));
+  return createResponse("Categoria atualizada com sucesso.", 200);
 }
 
 function deleteCategoryFromDatabase($user_id, $category_id) {
@@ -202,11 +199,11 @@ function deleteCategoryFromDatabase($user_id, $category_id) {
 
       $stmt_category->close();
       $conn->close();
-      return array("status" => 200, "response" => array("message" => "Categoria excluída com sucesso."));
+      return createResponse("Categoria excluída com sucesso.", 200);
   } else {
       $stmt_category->close();
       $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao excluir a categoria: " . $conn->error));
+      return createResponse("Erro ao excluir a categoria: " . $conn->error, 500);
   }
 }
 ?>

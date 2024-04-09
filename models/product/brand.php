@@ -23,16 +23,16 @@ function addBrandToDatabase($user_id, $name, $description, $image, $meta_title, 
       if ($stmt->affected_rows > 0) {
           $stmt->close();
           $conn->close();
-          return $brand_id;
+          return createResponse("Marca adicionada com sucesso.", 201);
       } else {
           $stmt->close();
           $conn->close();
-          return "Erro ao inserir na tabela " . PREFIX . "brand_description.";
+          return createResponse("Erro ao inserir na tabela " . PREFIX . "brand_description.", 500);
       }
   } else {
       $stmt->close();
       $conn->close();
-      return "Erro ao inserir na tabela " . PREFIX . "brand.";
+      return createResponse("Erro ao inserir na tabela " . PREFIX . "brand.", 500);
   }
 }
 
@@ -54,9 +54,7 @@ function getAllBrands($brand_id = null) {
   }
 
   if (!$stmt->execute()) {
-      http_response_code(500);
-      echo json_encode(array("error" => "Erro ao buscar marcas: " . $conn->error), JSON_UNESCAPED_UNICODE);
-      return;
+      return createResponse("Erro ao buscar marcas: " . $conn->error, 500);
   }
 
   $result = $stmt->get_result();
@@ -79,11 +77,10 @@ function getAllBrands($brand_id = null) {
       );
   }
 
-  http_response_code(200);
-  echo json_encode(array_values($brands), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
   $stmt->close();
   $conn->close();
+
+  return createResponse(array_values($brands), 200);
 }
 
 function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
@@ -113,7 +110,7 @@ function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $
   $stmt_brand = $conn->prepare($sql_brand);
 
   if (!$stmt_brand) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $bind_types_brand = str_repeat("s", count($params_brand));
@@ -123,7 +120,7 @@ function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $
   if (!$stmt_brand->execute()) {
       $stmt_brand->close();
       $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a marca na tabela " . PREFIX . "brand: " . $conn->error));
+      return createResponse("Erro ao atualizar a marca na tabela " . PREFIX . "brand: " . $conn->error, 500);
   }
 
   $stmt_brand->close();
@@ -159,7 +156,7 @@ function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $
   $stmt_description = $conn->prepare($sql_description);
 
   if (!$stmt_description) {
-      return array("status" => 500, "response" => array("error" => "Erro na preparação da declaração SQL: " . $conn->error));
+      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
   }
 
   $bind_types_description = str_repeat("s", count($params_description));
@@ -169,13 +166,13 @@ function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $
   if (!$stmt_description->execute()) {
       $stmt_description->close();
       $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao atualizar a marca na tabela " . PREFIX . "brand_description: " . $conn->error));
+      return createResponse("Erro ao atualizar a marca na tabela " . PREFIX . "brand_description: " . $conn->error, 500);
   }
 
   $stmt_description->close();
   $conn->close();
   
-  return array("status" => 200, "response" => array("message" => "marca atualizada com sucesso."));
+  return createResponse("marca atualizada com sucesso.", 200);
 }
 
 function deleteBrandFromDatabase($user_id, $brand_id) {
@@ -197,11 +194,11 @@ function deleteBrandFromDatabase($user_id, $brand_id) {
 
       $stmt_brand->close();
       $conn->close();
-      return array("status" => 200, "response" => array("message" => "marca excluída com sucesso."));
+      return createResponse("marca excluída com sucesso.", 200);
   } else {
       $stmt_brand->close();
       $conn->close();
-      return array("status" => 500, "response" => array("error" => "Erro ao excluir a marca: " . $conn->error));
+      return createResponse("Erro ao excluir a marca: " . $conn->error, 500);
   }
 }
 ?>
