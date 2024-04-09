@@ -130,7 +130,6 @@ function isValidCnpjCpf($cnpj_cpf) {
     return false;
 }
 
-
 function isValidRgIe($rg_ie) {
     $rg_ie = preg_replace("/[^0-9]/", "", $rg_ie);
 
@@ -168,22 +167,6 @@ function cpfExists($cpf, $customer_id = null) {
     $stmt->close();
 
     return $row['count'] > 0;
-}
-
-function imageExistsForProduct($product_id, $image_name) {
-    global $conn;
-
-    $stmt = $conn->prepare("SELECT COUNT(*) AS total FROM " . PREFIX . "product_image WHERE product_id = ? AND name = ?");
-    $stmt->bind_param("is", $product_id, $image_name);
-
-    $stmt->execute();
-
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-
-    $stmt->close();
-
-    return $row['total'] > 0;
 }
 
 function is_valid_image($file_tmp_name, $file_type) {

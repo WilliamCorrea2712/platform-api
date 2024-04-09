@@ -60,6 +60,10 @@ function getAllProducts($product_id = null) {
     $result = $stmt->get_result();
     $products = array();
 
+    if ($result->num_rows === 0) {
+        return createResponse(array(), 200);
+    }
+
     while ($row = $result->fetch_assoc()) {
         $product_id = $row['product_id'];
 
