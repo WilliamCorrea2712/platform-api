@@ -31,8 +31,7 @@ date_default_timezone_set('America/Sao_Paulo');
     PRODUCT . "deleteBrand" => "deleteBrand",
     PRODUCT . "getBrands" => "getBrands",
     PRODUCT . "addStockOptions" => "addStockOptions",
-    PRODUCT . "deleteStockOptions" => "deleteStockOptions",
-    PRODUCT . "getStockOptions" => "getStockOptions",
+    PRODUCT . "editStockOptions" => "editStockOptions",
   );
 
   if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -68,10 +67,12 @@ date_default_timezone_set('America/Sao_Paulo');
       if(isset($user_id) && $user_id > 0){
         $handler($user_id);
       } else {
-        echo json_encode(array("message" => "Usuário nao autenticado."));
+        return createResponse("Usuário não autenticado!", 400);
+        //echo json_encode(array("message" => "Usuário nao autenticado."));
       }
     }
   } else {
-    echo "Rota não encontrada!";
+    return createResponse("Rota não encontrada!", 400);
+    //echo "Rota não encontrada!";
   }
 ?>

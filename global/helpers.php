@@ -54,6 +54,26 @@ function itemExists($table, $id_column, $item_id) {
     return $count > 0;
 }
 
+function itemExistsArray($table, $id_column, $item_ids) {
+    global $conn;
+
+    $placeholders = implode(',', array_fill(0, count($item_ids), '?'));
+
+    $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . $table . " WHERE " . $id_column . " IN ($placeholders)";
+
+    $stmt = $conn->prepare($sql);
+
+    $types = str_repeat('i', count($item_ids));
+    $stmt->bind_param($types, ...$item_ids);
+
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    return $count === count($item_ids);
+}
+
 function getProductImages($product_id) {
     global $conn;
 
@@ -64,19 +84,6 @@ function getProductImages($product_id) {
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
     return $row['total'] ;
-}
-
-function checkStockTypeExists($type) {
-    global $conn;
-
-    $sql = "SELECT id FROM api_stock_types WHERE name = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $type);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $stmt->close();
-
-    return $result->num_rows > 0;
 }
 
 function isValidCnpjCpf($cnpj_cpf) {
