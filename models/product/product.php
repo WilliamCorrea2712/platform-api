@@ -5,35 +5,35 @@ require_once __DIR__ . '/../../global/logs.php';
 require_once(__DIR__ . '/../../config.php');
 
 function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume) {
-  global $conn;
+    global $conn;
 
-  $sql = "INSERT INTO " . PREFIX . "product 
-          (brand_id, categories, price, cost_price, weight, length, width, height, sku, sort_order, minimum, status, created_by_user_id, updated_by_user_id) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("isdddddsiiiiii", $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $user_id, $user_id);
-  
-  $stmt->execute();
+    $sql = "INSERT INTO " . PREFIX . "product 
+            (brand_id, categories, price, cost_price, weight, length, width, height, sku, sort_order, minimum, status, created_by_user_id, updated_by_user_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("isdddddsiiiiii", $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $user_id, $user_id);
+    
+    $stmt->execute();
 
-  if ($stmt->affected_rows > 0) {
-      $product_id = $stmt->insert_id;
+    if ($stmt->affected_rows > 0) {
+        $product_id = $stmt->insert_id;
 
-      $sql_description = "INSERT INTO " . PREFIX . "product_description 
-                          (product_id, name, description, tags, meta_title, meta_description, meta_keyword, description_resume) 
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-      $stmt_description = $conn->prepare($sql_description);
-      $stmt_description->bind_param("isssssss", $product_id, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
-      $stmt_description->execute();
+        $sql_description = "INSERT INTO " . PREFIX . "product_description 
+                            (product_id, name, description, tags, meta_title, meta_description, meta_keyword, description_resume) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt_description = $conn->prepare($sql_description);
+        $stmt_description->bind_param("isssssss", $product_id, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
+        $stmt_description->execute();
 
-      $stmt->close();
-      $stmt_description->close();
-      $conn->close();
-      return createResponse("Produto adicionado com sucesso.", 201);
-  } else {
-      $stmt->close();
-      $conn->close();
-      return createResponse("Erro ao inserir na tabela " . PREFIX . "product.", 500);
-  }
+        $stmt->close();
+        $stmt_description->close();
+        $conn->close();
+        return createResponse("Produto adicionado com sucesso.", 201);
+    } else {
+        $stmt->close();
+        $conn->close();
+        return createResponse("Erro ao inserir na tabela " . PREFIX . "product.", 500);
+    }
 }
 
 function getAllProducts($product_id = null) {
@@ -114,196 +114,196 @@ function getAllProducts($product_id = null) {
 
 
 function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume) {
-  global $conn;
+    global $conn;
 
-  $sql_product = "UPDATE " . PREFIX . "product SET ";
-  $params_product = array();
+    $sql_product = "UPDATE " . PREFIX . "product SET ";
+    $params_product = array();
 
-  if ($brand_id !== null) {
-      $sql_product .= "brand_id = ?, ";
-      $params_product[] = $brand_id;
-  }
-  if ($categories !== null) {
-      $sql_product .= "categories = ?, ";
-      $params_product[] = $categories;
-  }
-  if ($price !== null) {
-      $sql_product .= "price = ?, ";
-      $params_product[] = $price;
-  }
-  if ($cost_price !== null) {
-      $sql_product .= "cost_price = ?, ";
-      $params_product[] = $cost_price;
-  }
-  if ($weight !== null) {
-      $sql_product .= "weight = ?, ";
-      $params_product[] = $weight;
-  }
-  if ($length !== null) {
-      $sql_product .= "length = ?, ";
-      $params_product[] = $length;
-  }
-  if ($width !== null) {
-      $sql_product .= "width = ?, ";
-      $params_product[] = $width;
-  }
-  if ($height !== null) {
-      $sql_product .= "height = ?, ";
-      $params_product[] = $height;
-  }
-  if ($sku !== null) {
-      $sql_product .= "sku = ?, ";
-      $params_product[] = $sku;
-  }
-  if ($sort_order !== null) {
-    $sql_product .= "sort_order = ?, ";
-    $params_product[] = $sort_order;
-}
-  if ($minimum !== null) {
-      $sql_product .= "minimum = ?, ";
-      $params_product[] = $minimum;
-  }
-  if ($status !== null) {
-      $sql_product .= "status = ?, ";
-      $params_product[] = $status;
-  }
-  $sql_product .= "updated_by_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
-  $params_product[] = $user_id;
-  $params_product[] = $product_id;
+    if ($brand_id !== null) {
+        $sql_product .= "brand_id = ?, ";
+        $params_product[] = $brand_id;
+    }
+    if ($categories !== null) {
+        $sql_product .= "categories = ?, ";
+        $params_product[] = $categories;
+    }
+    if ($price !== null) {
+        $sql_product .= "price = ?, ";
+        $params_product[] = $price;
+    }
+    if ($cost_price !== null) {
+        $sql_product .= "cost_price = ?, ";
+        $params_product[] = $cost_price;
+    }
+    if ($weight !== null) {
+        $sql_product .= "weight = ?, ";
+        $params_product[] = $weight;
+    }
+    if ($length !== null) {
+        $sql_product .= "length = ?, ";
+        $params_product[] = $length;
+    }
+    if ($width !== null) {
+        $sql_product .= "width = ?, ";
+        $params_product[] = $width;
+    }
+    if ($height !== null) {
+        $sql_product .= "height = ?, ";
+        $params_product[] = $height;
+    }
+    if ($sku !== null) {
+        $sql_product .= "sku = ?, ";
+        $params_product[] = $sku;
+    }
+    if ($sort_order !== null) {
+        $sql_product .= "sort_order = ?, ";
+        $params_product[] = $sort_order;
+    }
+    if ($minimum !== null) {
+        $sql_product .= "minimum = ?, ";
+        $params_product[] = $minimum;
+    }
+    if ($status !== null) {
+        $sql_product .= "status = ?, ";
+        $params_product[] = $status;
+    }
+    $sql_product .= "updated_by_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
+    $params_product[] = $user_id;
+    $params_product[] = $product_id;
 
-  $sql_product = rtrim($sql_product, ", ");
+    $sql_product = rtrim($sql_product, ", ");
 
-  $stmt_product = $conn->prepare($sql_product);
+    $stmt_product = $conn->prepare($sql_product);
 
-  if (!$stmt_product) {
-      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
-  }
+    if (!$stmt_product) {
+        return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
+    }
 
-  $bind_types_product = str_repeat("s", count($params_product));
+    $bind_types_product = str_repeat("s", count($params_product));
 
-  $stmt_product->bind_param($bind_types_product, ...$params_product);
+    $stmt_product->bind_param($bind_types_product, ...$params_product);
 
-  if (!$stmt_product->execute()) {
-      $stmt_product->close();
-      return createResponse("Erro ao atualizar o produto na tabela: " . $conn->error, 500);
-  }
+    if (!$stmt_product->execute()) {
+        $stmt_product->close();
+        return createResponse("Erro ao atualizar o produto na tabela: " . $conn->error, 500);
+    }
 
-  $stmt_product->close();
+    $stmt_product->close();
 
-  $sql_description = "UPDATE " . PREFIX . "product_description SET ";
-  $params_description = array();
+    $sql_description = "UPDATE " . PREFIX . "product_description SET ";
+    $params_description = array();
 
-  if ($name !== null) {
-      $sql_description .= "name = ?, ";
-      $params_description[] = $name;
-  }
-  if ($description !== null) {
-      $sql_description .= "description = ?, ";
-      $params_description[] = $description;
-  }
-  if ($tags !== null) {
-      $sql_description .= "tags = ?, ";
-      $params_description[] = $tags;
-  }
-  if ($meta_title !== null) {
-      $sql_description .= "meta_title = ?, ";
-      $params_description[] = $meta_title;
-  }
-  if ($meta_description !== null) {
-      $sql_description .= "meta_description = ?, ";
-      $params_description[] = $meta_description;
-  }
-  if ($meta_keyword !== null) {
-      $sql_description .= "meta_keyword = ?, ";
-      $params_description[] = $meta_keyword;
-  }
-  if ($description_resume !== null) {
-      $sql_description .= "description_resume = ?, ";
-      $params_description[] = $description_resume;
-  }
-  $sql_description .= "updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
-  $params_description[] = $product_id;
+    if ($name !== null) {
+        $sql_description .= "name = ?, ";
+        $params_description[] = $name;
+    }
+    if ($description !== null) {
+        $sql_description .= "description = ?, ";
+        $params_description[] = $description;
+    }
+    if ($tags !== null) {
+        $sql_description .= "tags = ?, ";
+        $params_description[] = $tags;
+    }
+    if ($meta_title !== null) {
+        $sql_description .= "meta_title = ?, ";
+        $params_description[] = $meta_title;
+    }
+    if ($meta_description !== null) {
+        $sql_description .= "meta_description = ?, ";
+        $params_description[] = $meta_description;
+    }
+    if ($meta_keyword !== null) {
+        $sql_description .= "meta_keyword = ?, ";
+        $params_description[] = $meta_keyword;
+    }
+    if ($description_resume !== null) {
+        $sql_description .= "description_resume = ?, ";
+        $params_description[] = $description_resume;
+    }
+    $sql_description .= "updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
+    $params_description[] = $product_id;
 
-  $sql_description = rtrim($sql_description, ", ");
+    $sql_description = rtrim($sql_description, ", ");
 
-  $stmt_description = $conn->prepare($sql_description);
+    $stmt_description = $conn->prepare($sql_description);
 
-  if (!$stmt_description) {
-      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
-  }
+    if (!$stmt_description) {
+        return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
+    }
 
-  $bind_types_description = str_repeat("s", count($params_description));
+    $bind_types_description = str_repeat("s", count($params_description));
 
-  $stmt_description->bind_param($bind_types_description, ...$params_description);
+    $stmt_description->bind_param($bind_types_description, ...$params_description);
 
-  if (!$stmt_description->execute()) {
-      $stmt_description->close();
-      return createResponse("Erro ao atualizar a descrição do produto na tabela: " . $conn->error, 500);
-  }
+    if (!$stmt_description->execute()) {
+        $stmt_description->close();
+        return createResponse("Erro ao atualizar a descrição do produto na tabela: " . $conn->error, 500);
+    }
 
-  $stmt_description->close();
-  
-  return createResponse("Produto atualizado com sucesso.", 200);
+    $stmt_description->close();
+    
+    return createResponse("Produto atualizado com sucesso.", 200);
 }
 
 function deleteProductFromDatabase($user_id, $product_id) {
-  global $conn;
+    global $conn;
 
-  $sql_description = "DELETE FROM " . PREFIX . "product_description WHERE product_id = ?";
-  $stmt_description = $conn->prepare($sql_description);
-  $stmt_description->bind_param("i", $product_id);
-  
-  $stmt_description->execute();
+    $sql_description = "DELETE FROM " . PREFIX . "product_description WHERE product_id = ?";
+    $stmt_description = $conn->prepare($sql_description);
+    $stmt_description->bind_param("i", $product_id);
+    
+    $stmt_description->execute();
 
-  if ($stmt_description->affected_rows <= 0 && $stmt_description->errno != 0) {
-      $stmt_description->close();
-      return createResponse("Erro ao excluir a descrição do produto.", 500);
-  }
+    if ($stmt_description->affected_rows <= 0 && $stmt_description->errno != 0) {
+        $stmt_description->close();
+        return createResponse("Erro ao excluir a descrição do produto.", 500);
+    }
 
-  $sql_product = "DELETE FROM " . PREFIX . "product WHERE product_id = ? ";
-  $stmt_product = $conn->prepare($sql_product);
-  $stmt_product->bind_param("i", $product_id);
-  
-  $stmt_product->execute();
+    $sql_product = "DELETE FROM " . PREFIX . "product WHERE product_id = ? ";
+    $stmt_product = $conn->prepare($sql_product);
+    $stmt_product->bind_param("i", $product_id);
+    
+    $stmt_product->execute();
 
-  if ($stmt_product->affected_rows > 0) {
-      insertLog($user_id, "product_id=$product_id", "deleted");
-      $stmt_product->close();
-      return createResponse("Produto excluído com sucesso.", 200);
-  } else {
-      $stmt_product->close();
-      return createResponse("Erro ao excluir o produto.", 500);
-  }
+    if ($stmt_product->affected_rows > 0) {
+        insertLog($user_id, "product_id=$product_id", "deleted");
+        $stmt_product->close();
+        return createResponse("Produto excluído com sucesso.", 200);
+    } else {
+        $stmt_product->close();
+        return createResponse("Erro ao excluir o produto.", 500);
+    }
 }
 
 function saveImageToDatabase($user_id, $product_id, $image_name, $image_url, $alt = null) {
-  global $conn;
+    global $conn;
 
-  $get_next_so = "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_so FROM " . PREFIX . "product_image WHERE product_id = ?";
-  $stmt_get_next_so = $conn->prepare($get_next_so);
-  $stmt_get_next_so->bind_param("i", $product_id);
-  $stmt_get_next_so->execute();
-  $result_next_so = $stmt_get_next_so->get_result();
-  $next_so_row = $result_next_so->fetch_assoc();
-  $next_so = $next_so_row['next_so'];
+    $get_next_so = "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_so FROM " . PREFIX . "product_image WHERE product_id = ?";
+    $stmt_get_next_so = $conn->prepare($get_next_so);
+    $stmt_get_next_so->bind_param("i", $product_id);
+    $stmt_get_next_so->execute();
+    $result_next_so = $stmt_get_next_so->get_result();
+    $next_so_row = $result_next_so->fetch_assoc();
+    $next_so = $next_so_row['next_so'];
 
-  $sql = "INSERT INTO " . PREFIX . "product_image (product_id, name, url, alt, sort_order, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?)";
-  $stmt = $conn->prepare($sql);
+    $sql = "INSERT INTO " . PREFIX . "product_image (product_id, name, url, alt, sort_order, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
 
-  if (!$stmt) {
-      return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
-  }
+    if (!$stmt) {
+        return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
+    }
 
-  $stmt->bind_param("isssii", $product_id, $image_name, $image_url, $alt, $next_so, $user_id);
+    $stmt->bind_param("isssii", $product_id, $image_name, $image_url, $alt, $next_so, $user_id);
 
-  if (!$stmt->execute()) {
-      $stmt->close();
-      return createResponse("Erro ao salvar a imagem no banco de dados: " . $stmt->error, 500);
-  }
+    if (!$stmt->execute()) {
+        $stmt->close();
+        return createResponse("Erro ao salvar a imagem no banco de dados: " . $stmt->error, 500);
+    }
 
-  $stmt->close();
+    $stmt->close();
 
-  return createResponse("Imagem salva no banco de dados com sucesso.", 200);
+    return createResponse("Imagem salva no banco de dados com sucesso.", 200);
 }
 
 function deleteProductImageFromDatabase($user_id, $product_id, $image_id) {
