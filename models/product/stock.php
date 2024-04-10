@@ -213,33 +213,53 @@ class ProductStockModel {
 
     public function getStockOptions($product_id) {
         global $conn;
-
-        $sql = "SELECT id, attribute_id, quantity, parent_attribute_id FROM " . PREFIX . "product_attribute_value WHERE product_id = ?";
+    
+        $sql = "SELECT pav.id, pav.attribute_id, pav.quantity, pav.parent_attribute_id, ap.product_id, apd.name 
+        FROM " . PREFIX . "product_attribute_value pav
+        INNER JOIN " . PREFIX . "product ap ON pav.product_id = ap.product_id
+        INNER JOIN " . PREFIX . "product_description apd ON ap.product_id = apd.product_id";
+        
+        if ($product_id !== null) {
+            $sql .= " WHERE pav.product_id = ?";
+        }
+    
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $product_id);
+    
+        if ($product_id !== null) {
+            $stmt->bind_param("i", $product_id);
+        }   
+    
         $stmt->execute();
         $result = $stmt->get_result();
-
+    
         $options = array();
-
+    
         while ($row = $result->fetch_assoc()) {
+            if (!isset($options[$row['product_id']])) {
+                $options[$row['product_id']] = array(
+                    'product_id' => $row['product_id'],
+                    'name' => $row['name'],
+                    'options' => array()
+                );
+            }
+    
             $option = array(
                 'id' => $row['id'],
                 'attribute_id' => $row['attribute_id'],
                 'quantity' => $row['quantity'],
                 'parent_attribute_id' => $row['parent_attribute_id']
             );
-        
-            $options[] = $option;
+    
+            $options[$row['product_id']]['options'][] = $option;
         }
-        
+    
         $stmt->close();        
-
+    
         if (empty($options)) {
             return createResponse("Nenhuma opção de estoque encontrada para o produto especificado.", 404);
         } else {
-            return createResponse($options, 200);
+            return createResponse(array_values($options), 200);
         }
-    }
+    }  
 }
 ?>

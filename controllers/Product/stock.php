@@ -42,11 +42,7 @@ function getStockOptions($user_id) {
         $model = new ProductStockModel();
         $product_id = $_GET['product_id'] ?? null;
 
-        if ($product_id !== null) {
-            return $model->getStockOptions($product_id);
-        } else {
-            return createResponse("ID do produto não fornecido.", 400);
-        }
+        return $model->getStockOptions($product_id);
     } else {
         return createResponse("Método não permitido.", 405);
     }
