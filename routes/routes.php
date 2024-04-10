@@ -39,37 +39,37 @@ date_default_timezone_set('America/Sao_Paulo');
         $handler = $routes[$route];
 
         if (strpos($route, "account/") === 0) {
-        require_once __DIR__ . "/../controllers/account/account.php";
+            require_once __DIR__ . "/../controllers/account/account.php";
         } else if (strpos($route, "user/") === 0) {
-        require_once __DIR__ . "/../controllers/user/user.php";
+            require_once __DIR__ . "/../controllers/user/user.php";
         } else if (strpos($route, "product/") === 0) {
-        require_once __DIR__ . "/../controllers/product/product.php";
-        require_once __DIR__ . "/../controllers/product/category.php";
-        require_once __DIR__ . "/../controllers/product/brand.php";
-        require_once __DIR__ . "/../controllers/product/stock.php";
+            require_once __DIR__ . "/../controllers/product/product.php";
+            require_once __DIR__ . "/../controllers/product/category.php";
+            require_once __DIR__ . "/../controllers/product/brand.php";
+            require_once __DIR__ . "/../controllers/product/stock.php";
         }
 
         if(strpos($route, "user/addUser") !== false){
-        $handler();
+            $handler();
         } else if(strpos($route, "account/getCustomers") !== false || 
                 strpos($route, "product/getCategories") !== false || 
                 strpos($route, "product/getBrands") !== false ||
                 strpos($route, "product/getProducts") !== false){
 
-        if (isset($_GET['id'])){
-            $handler($_GET['id']);
-        } else{
-            $handler();
-        }
+            if (isset($_GET['id'])){
+                $handler($_GET['id']);
+            } else{
+                $handler();
+            }
         } else {
-        $user_id = verifyToken()->user_id;
+            $user_id = verifyToken()->user_id;
 
-        if(isset($user_id) && $user_id > 0){
-            $handler($user_id);
-        } else {
-            return createResponse("Usuário não autenticado!", 400);
-            //echo json_encode(array("message" => "Usuário nao autenticado."));
-        }
+            if(isset($user_id) && $user_id > 0){
+                $handler($user_id);
+            } else {
+                return createResponse("Usuário não autenticado!", 400);
+                //echo json_encode(array("message" => "Usuário nao autenticado."));
+            }
         }
     } else {
         return createResponse("Rota não encontrada!", 400);
