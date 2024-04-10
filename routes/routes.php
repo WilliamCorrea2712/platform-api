@@ -32,6 +32,7 @@ date_default_timezone_set('America/Sao_Paulo');
         PRODUCT . "getBrands" => "getBrands",
         PRODUCT . "addStockOptions" => "addStockOptions",
         PRODUCT . "editStockOptions" => "editStockOptions",
+        PRODUCT . "getStockOptions" => "getStockOptions",
     );
 
     if (isset($_GET['route']) && isset($routes[$_GET['route']])) {

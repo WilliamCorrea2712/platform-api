@@ -113,53 +113,50 @@ class ProductStockModel {
 
     public function editStockOptions($product_id, $id, $attribute_id, $quantity) {
         global $conn;
-
+    
         if (!$this->stockOptionExists($product_id, $id, $attribute_id)) {
             return createResponse("Opção de estoque não encontrada para o produto especificado.", 404);
-        }    
-        
+        }
+    
         if (!is_int($quantity) || $quantity <= 0) {
-        return createResponse("A quantidade fornecida deve ser um número inteiro positivo.", 400);
+            return createResponse("A quantidade fornecida deve ser um número inteiro positivo.", 400);
         }
-        
-        $current_quantity = $this->getCurrentQuantity($product_id, $id, $attribute_id);
-
-        if($current_quantity['parent_attribute_id'] === null){
-        return createResponse("Opção de estoque não pode ser alterada, verifique o id para não alterar o atributo pai.", 400);
+    
+        $current_quantity_data = $this->getCurrentQuantity($product_id, $id, $attribute_id);
+    
+        if ($current_quantity_data['parent_attribute_id'] === null) {
+            return createResponse("Opção de estoque não pode ser alterada, verifique o ID para não alterar o atributo pai.", 400);
         }
-
-        $new_quantity = $current_quantity['quantity'] - $quantity;
-
+    
+        $new_quantity = $current_quantity_data['quantity'] - $quantity;
+    
         if ($new_quantity < 0) {
             return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
         }
-
-        $sql = "UPDATE " . PREFIX . "product_attribute_value SET quantity = ? WHERE product_id = ? AND id = ? AND attribute_id = ?";
+    
+        $parent_attribute_id = $current_quantity_data['parent_attribute_id'];
+    
+        $sql = "UPDATE " . PREFIX . "product_attribute_value SET quantity = CASE WHEN id = ? THEN ? ELSE quantity END WHERE product_id = ? AND attribute_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiii", $new_quantity, $product_id, $id, $attribute_id);
-        $stmt->execute(); 
-        
+        $stmt->bind_param("iiii", $id, $new_quantity, $product_id, $attribute_id);
+        $stmt->execute();
+    
         if ($stmt->affected_rows > 0) {
-        $current_qtd = $this->getCurrentQuantityParent($product_id, $current_quantity['parent_attribute_id'], $attribute_id);
-        $new_qtd = $current_qtd['quantity'] - $quantity;
+            $new_parent_quantity = $this->getCurrentQuantityParent($product_id, $parent_attribute_id, $attribute_id)['quantity'] - $quantity;
     
-        if ($new_qtd < 0) {
-            return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
-        }
+            $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET quantity = ? WHERE product_id = ? AND id = ?";
+            $stmt_parent = $conn->prepare($sql_parent);
+            $stmt_parent->bind_param("iii", $new_parent_quantity, $product_id, $parent_attribute_id);
+            $stmt_parent->execute();
     
-        $sqlParent = "UPDATE " . PREFIX . "product_attribute_value SET quantity = ? WHERE product_id = ? AND id = ? ";
-        $stmtParent = $conn->prepare($sqlParent);
-        $stmtParent->bind_param("iii", $new_qtd, $product_id, $current_quantity['parent_attribute_id']);
-        $stmtParent->execute(); 
-
-        if ($stmtParent->affected_rows > 0) {
-            return createResponse("Opção de estoque atualizada com sucesso.", 200);
-        } else {
-            return createResponse("Falha ao atualizar a opção de estoque pai.", 500);
-        }
+            if ($stmt_parent->affected_rows > 0) {
+                return createResponse("Opção de estoque atualizada com sucesso.", 200);
+            } else {
+                return createResponse("Falha ao atualizar a opção de estoque pai.", 500);
+            }
         } else {
             return createResponse("Falha ao atualizar a opção de estoque.", 500);
-        } 
+        }
     }
     
     private function stockOptionExists($product_id, $id, $attribute_id) {
@@ -211,6 +208,37 @@ class ProductStockModel {
             return array('quantity' => $quantity, 'parent_attribute_id' => $parent_attribute_id);
         } else {
             return null;
+        }
+    }
+
+    public function getStockOptions($product_id) {
+        global $conn;
+
+        $sql = "SELECT id, attribute_id, quantity, parent_attribute_id FROM " . PREFIX . "product_attribute_value WHERE product_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $product_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $options = array();
+
+        while ($row = $result->fetch_assoc()) {
+            $option = array(
+                'id' => $row['id'],
+                'attribute_id' => $row['attribute_id'],
+                'quantity' => $row['quantity'],
+                'parent_attribute_id' => $row['parent_attribute_id']
+            );
+        
+            $options[] = $option;
+        }
+        
+        $stmt->close();        
+
+        if (empty($options)) {
+            return createResponse("Nenhuma opção de estoque encontrada para o produto especificado.", 404);
+        } else {
+            return createResponse($options, 200);
         }
     }
 }

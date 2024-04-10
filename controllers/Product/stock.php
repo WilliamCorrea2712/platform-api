@@ -37,6 +37,21 @@ function editStockOptions($user_id) {
     }
 }
 
+function getStockOptions($user_id) {
+    if ($_SERVER["REQUEST_METHOD"] == "GET") {
+        $model = new ProductStockModel();
+        $product_id = $_GET['product_id'] ?? null;
+
+        if ($product_id !== null) {
+            return $model->getStockOptions($product_id);
+        } else {
+            return createResponse("ID do produto não fornecido.", 400);
+        }
+    } else {
+        return createResponse("Método não permitido.", 405);
+    }
+}
+
 class ProductAttributeController {
     public function processAttributes($options) {
         if (empty($options)) {
