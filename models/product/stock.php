@@ -6,7 +6,7 @@ require_once(__DIR__ . '/../../config.php');
 class ProductStockModel {
     private static $insertedId = null;
     
-    public function addStockOptions($options) {
+    public function addStockOptions($user_id, $options) {
         if (empty($options)) {
             return createResponse("Nenhuma opção de estoque foi fornecida.", 400);
         }
@@ -35,7 +35,12 @@ class ProductStockModel {
         $attribute_value = $option['attribute_value'];
         $quantity = $option['quantity'];
 
-        $attribute_id = $this->getAttributeId($attribute_name);
+        if(!isset($attribute_id)){
+            $attribute_id = $this->getAttributeId($attribute_name);
+        } else {
+            $attribute_id = $attribute_id;
+        }
+
         if (!$attribute_id) {
             $attribute_id = $this->addAttribute($attribute_name);
         }
@@ -45,9 +50,9 @@ class ProductStockModel {
         }
 
         if(isset($parent_attribute_id)){
-            $this->addAttributeValue($product_id, $attribute_id, $attribute_value, $quantity, $group_id, $parent_attribute_id);
+            $this->addAttributeValue($user_id, $product_id, $attribute_id, $attribute_value, $quantity, $group_id, $parent_attribute_id);
         } else {
-            $parent_attribute_id = $this->addAttributeValue($product_id, $attribute_id, $attribute_value, $quantity, $group_id);
+            $parent_attribute_id = $this->addAttributeValue($user_id, $product_id, $attribute_id, $attribute_value, $quantity, $group_id);
         }          
         }
 
@@ -70,7 +75,7 @@ class ProductStockModel {
 
     private function getAttributeId($name) {
         global $conn;
-
+        
         $query = "SELECT id FROM " . PREFIX . "product_attribute WHERE name = ?";
         $stmt = $conn->prepare($query);
         $stmt->bind_param("s", $name);
@@ -95,23 +100,29 @@ class ProductStockModel {
         return $stmt->insert_id;
     }
 
-    public function addAttributeValue($product_id, $attribute_id, $value, $quantity, $group_id = null, $parent_attribute_id = null) {
+    public function addAttributeValue($user_id, $product_id, $attribute_id, $value, $quantity, $group_id = null, $parent_attribute_id = null) {
         global $conn;
-
-        $query = "INSERT INTO " . PREFIX . "product_attribute_value (product_id, attribute_id, value, quantity, group_id, parent_attribute_id) VALUES (?, ?, ?, ?, ?, ?)";
+    
+        $created_at = date('Y-m-d H:i:s');
+        $created_by_user_id = $user_id;
+    
+        $query = "INSERT INTO " . PREFIX . "product_attribute_value 
+                  (product_id, attribute_id, value, quantity, group_id, parent_attribute_id, created_at, created_by_user_id) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("iisiii", $product_id, $attribute_id, $value, $quantity, $group_id, $parent_attribute_id);
+        $stmt->bind_param("iisiiiss", $product_id, $attribute_id, $value, $quantity, $group_id, $parent_attribute_id, $created_at, $created_by_user_id);
         $stmt->execute();
-
+    
         if (self::$insertedId === null) {
             self::$insertedId = $stmt->insert_id;
         }
-
+    
         $stmt->close();
         return self::$insertedId;
     }
+    
 
-    public function editStockOptions($product_id, $id, $attribute_id, $quantity) {
+    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation) {
         global $conn;
     
         if (!$this->stockOptionExists($product_id, $id, $attribute_id)) {
@@ -128,7 +139,15 @@ class ProductStockModel {
             return createResponse("Opção de estoque não pode ser alterada, verifique o ID para não alterar o atributo pai.", 400);
         }
     
-        $new_quantity = $current_quantity_data['quantity'] - $quantity;
+        $new_quantity = $current_quantity_data['quantity'];
+    
+        if ($operation === 'add') {
+            $new_quantity += $quantity;
+        } elseif ($operation === 'subtract') {
+            $new_quantity -= $quantity;
+        } else {
+            return createResponse("Operação inválida. Use 'add' para adicionar e 'subtract' para subtrair a quantidade de estoque.", 400);
+        }
     
         if ($new_quantity < 0) {
             return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
@@ -136,17 +155,31 @@ class ProductStockModel {
     
         $parent_attribute_id = $current_quantity_data['parent_attribute_id'];
     
-        $sql = "UPDATE " . PREFIX . "product_attribute_value SET quantity = CASE WHEN id = ? THEN ? ELSE quantity END WHERE product_id = ? AND attribute_id = ?";
+        $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
+                    quantity = CASE WHEN id = ? THEN ? ELSE quantity END, 
+                    updated_at = NOW(),
+                    updated_by_user_id = ?
+                WHERE product_id = ? AND attribute_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiii", $id, $new_quantity, $product_id, $attribute_id);
+        $stmt->bind_param("iiiii", $id, $new_quantity, $user_id, $product_id, $attribute_id);
         $stmt->execute();
     
         if ($stmt->affected_rows > 0) {
-            $new_parent_quantity = $this->getCurrentQuantityParent($product_id, $parent_attribute_id, $attribute_id)['quantity'] - $quantity;
+            $new_parent_quantity = $this->getCurrentQuantityParent($product_id, $parent_attribute_id, $attribute_id)['quantity'];
     
-            $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET quantity = ? WHERE product_id = ? AND id = ?";
+            if ($operation === 'add') {
+                $new_parent_quantity += $quantity;
+            } elseif ($operation === 'subtract') {
+                $new_parent_quantity -= $quantity;
+            }
+    
+            $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET 
+                                quantity = ?, 
+                                updated_at = NOW(), 
+                                updated_by_user_id = ? 
+                            WHERE product_id = ? AND id = ?";
             $stmt_parent = $conn->prepare($sql_parent);
-            $stmt_parent->bind_param("iii", $new_parent_quantity, $product_id, $parent_attribute_id);
+            $stmt_parent->bind_param("iiii", $new_parent_quantity, $user_id, $product_id, $parent_attribute_id);
             $stmt_parent->execute();
     
             if ($stmt_parent->affected_rows > 0) {

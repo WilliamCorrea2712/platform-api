@@ -2,12 +2,41 @@
 require_once __DIR__ . '/../mysql/conn.php';
 require_once __DIR__ . '/../config.php';
 
-function createResponse($message, $status) {
+/*function createResponse($message, $status) {
     http_response_code($status);
     if ($status >= 200 && $status < 400) {
         echo json_encode(array("message" => $message), JSON_UNESCAPED_UNICODE);
     } else {
         echo json_encode(array("error" => $message), JSON_UNESCAPED_UNICODE);
+    }
+}*/
+
+function createResponse($message, $status) {
+    http_response_code($status);
+    if ($status >= 200 && $status < 400) {
+        if (is_array($message)) {
+            $response = array();
+            foreach ($message as $item) {
+                $response[] = formatData($item);
+            }
+            echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } else {
+            echo json_encode(formatData($message), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }
+    } else {
+        echo json_encode(array("error" => $message), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+}
+
+function formatData($data) {
+    if (is_array($data)) {
+        $formatted_data = array();
+        foreach ($data as $key => $value) {
+            $formatted_data[$key] = formatData($value);
+        }
+        return $formatted_data;
+    } else {
+        return $data;
     }
 }
 
