@@ -294,5 +294,35 @@ class ProductStockModel {
             return createResponse(array_values($options), 200);
         }
     }  
+
+    public function deleteStockOptions($user_id, $product_id, $ids, $attribute_id) {
+        global $conn;
+
+        foreach ($ids as $id) {
+            if (!$this->stockOptionExists($product_id, $id, $attribute_id)) {
+                return createResponse("Opção de estoque não encontrada para o produto especificado.", 404);
+            }
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        $sql = "DELETE FROM " . PREFIX . "product_attribute_value WHERE product_id = ? AND id IN ($placeholders) AND attribute_id = ?";
+        $stmt = $conn->prepare($sql);
+
+        $params = array_merge([$product_id], $ids, [$attribute_id]);
+        $types = str_repeat('i', count($ids) + 2);
+
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        
+        insertLog($user_id, "product_attribute_value_id=$product_id", "deleted");
+
+        if ($stmt->affected_rows > 0) {
+            return createResponse("Opções de estoque excluídas com sucesso.", 200);
+        } else {
+            return createResponse("Falha ao excluir as opções de estoque.", 500);
+        }
+    }
+
 }
 ?>

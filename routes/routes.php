@@ -32,6 +32,7 @@ date_default_timezone_set('America/Sao_Paulo');
         PRODUCT . "getBrands" => "getBrands",
         PRODUCT . "addStockOptions" => "addStockOptions",
         PRODUCT . "editStockOptions" => "editStockOptions",
+        PRODUCT . "deleteStockOptions" => "deleteStockOptions",
         PRODUCT . "getStockOptions" => "getStockOptions",
     );
 
