@@ -45,8 +45,8 @@ function editStockOptions($user_id) {
             return createResponse("Os campos 'additional_value' e 'operation_type' devem ser fornecidos juntos.", 400);
         }
 
-        $controller = new ProductAttributeController();
-        return $controller->updateStockOption($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type);
+        $model = new ProductStockModel();
+        return $model->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type);
     } else {
         return createResponse("Método não permitido.", 405);
     }
@@ -98,11 +98,6 @@ class ProductAttributeController {
     
         $model = new ProductStockModel();
         return $model->addStockOptions($user_id, $options);
-    }
-
-    public function updateStockOption($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type) {
-        $model = new ProductStockModel();
-        return $model->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type);
     }
 }
 ?>

@@ -347,6 +347,5 @@ class ProductStockModel {
             return createResponse("Falha ao excluir as opções de estoque.", 500);
         }
     }
-
 }
 ?>
