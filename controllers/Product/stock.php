@@ -31,8 +31,22 @@ function editStockOptions($user_id) {
         $quantity = $data['quantity'];
         $operation = $data['operation'];
 
+        $additional_value = null;
+        $operation_type = null;
+
+        if (isset($data['additional_value']) && isset($data['operation_type'])) {
+            $additional_value = $data['additional_value'];
+            $operation_type = $data['operation_type'];
+
+            if ($operation_type !== '+' && $operation_type !== '-') {
+                return createResponse("O campo 'operation_type' deve ser '+' ou '-'!", 400);
+            }
+        } elseif (isset($data['additional_value']) || isset($data['operation_type'])) {
+            return createResponse("Os campos 'additional_value' e 'operation_type' devem ser fornecidos juntos.", 400);
+        }
+
         $controller = new ProductAttributeController();
-        return $controller->updateStockOption($user_id, $product_id, $id, $attribute_id, $quantity, $operation);
+        return $controller->updateStockOption($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type);
     } else {
         return createResponse("Método não permitido.", 405);
     }
@@ -73,22 +87,22 @@ class ProductAttributeController {
         if (empty($options)) {
             return createResponse("Nenhuma opção de estoque foi fornecida.", 400);
         }
-
+    
         $firstQuantity = $options[0]['quantity'];
         $otherQuantities = array_column(array_slice($options, 1), 'quantity');
         $totalQuantity = array_sum($otherQuantities);
-
+    
         if ($firstQuantity !== $totalQuantity) {
             return createResponse("A quantidade do tipo não é igual à soma das quantidades dos atributos.", 400);
         }
-
+    
         $model = new ProductStockModel();
         return $model->addStockOptions($user_id, $options);
     }
 
-    public function updateStockOption($user_id, $product_id, $id, $attribute_id, $quantity, $operation) {
+    public function updateStockOption($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type) {
         $model = new ProductStockModel();
-        return $model->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation);
+        return $model->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type);
     }
 }
 ?>

@@ -18,7 +18,7 @@ class ProductStockModel {
         $product_id = $first_option['product_id'];
 
         if (!itemExists("product", "product_id", $product_id)) {
-        return createResponse("Produto não encontrado.", 404);
+            return createResponse("Produto não encontrado.", 404);
         }
 
         $group_id = null;
@@ -27,33 +27,44 @@ class ProductStockModel {
         }
 
         foreach ($options as $option) {
-        if (!isset($option['attribute_name'], $option['attribute_value'], $option['quantity'])) {
-            return createResponse("Os campos 'attribute_name', 'attribute_value' e 'quantity' são obrigatórios para cada opção.", 400);
-        }
+            if (!isset($option['attribute_name'], $option['attribute_value'], $option['quantity'])) {
+                return createResponse("Os campos 'attribute_name', 'attribute_value' e 'quantity' são obrigatórios para cada opção.", 400);
+            }
 
-        $attribute_name = $option['attribute_name'];
-        $attribute_value = $option['attribute_value'];
-        $quantity = $option['quantity'];
+            $attribute_name = $option['attribute_name'];
+            $attribute_value = $option['attribute_value'];
+            $quantity = $option['quantity'];
 
-        if(!isset($attribute_id)){
-            $attribute_id = $this->getAttributeId($attribute_name);
-        } else {
-            $attribute_id = $attribute_id;
-        }
+            if(!isset($option['additional_value']) || !isset($option['operation_type'])){
+                return createResponse("Os campos 'additional_value' e 'operation_type' devem ser enviados!", 400);
+            } else {
+                $additional_value = $option['additional_value'];
+                $operation_type = $option['operation_type'];
 
-        if (!$attribute_id) {
-            $attribute_id = $this->addAttribute($attribute_name);
-        }
+                if ($operation_type !== '+' && $operation_type !== '-') {
+                    return createResponse("O campo 'operation_type' deve ser '+' ou '-'!", 400);
+                }
+            }
 
-        if ($this->checkAttributeValueExists($product_id, $attribute_id, $attribute_value)) {
-            return createResponse("O valor do atributo já existe para este produto.", 400);
-        }
+            if(!isset($attribute_id)){
+                $attribute_id = $this->getAttributeId($attribute_name, $attribute_value);
+            } else {
+                $attribute_id = $attribute_id;
+            }
 
-        if(isset($parent_attribute_id)){
-            $this->addAttributeValue($user_id, $product_id, $attribute_id, $attribute_value, $quantity, $group_id, $parent_attribute_id);
-        } else {
-            $parent_attribute_id = $this->addAttributeValue($user_id, $product_id, $attribute_id, $attribute_value, $quantity, $group_id);
-        }          
+            if (!$attribute_id) {
+                $attribute_id = $this->addAttribute($attribute_name, $attribute_value);
+            }
+
+            if ($this->checkAttributeValueExists($product_id, $attribute_id, $attribute_value)) {
+                return createResponse("O valor do atributo já existe para este produto.", 400);
+            }
+
+            if(isset($parent_attribute_id)){
+                $this->addAttributeValue($user_id, $product_id, $attribute_id, $attribute_value, $quantity, $group_id, $parent_attribute_id, $additional_value, $operation_type);
+            } else {
+                $parent_attribute_id = $this->addAttributeValue($user_id, $product_id, $attribute_id, $attribute_value, $quantity, $group_id, $parent_attribute_id = null, $additional_value, $operation_type);
+            }          
         }
 
         return createResponse("Opções de estoque adicionadas com sucesso.", 201);
@@ -73,12 +84,12 @@ class ProductStockModel {
         return $row['count'] > 0;
     }
 
-    private function getAttributeId($name) {
+    private function getAttributeId($name, $value) {
         global $conn;
         
-        $query = "SELECT id FROM " . PREFIX . "product_attribute WHERE name = ?";
+        $query = "SELECT id FROM " . PREFIX . "product_attribute WHERE name = ? AND value = ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("s", $name);
+        $stmt->bind_param("ss", $name, $value);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -89,28 +100,28 @@ class ProductStockModel {
         }
     }
 
-    private function addAttribute($name) {
+    private function addAttribute($name, $value) {
         global $conn;
 
-        $query = "INSERT INTO " . PREFIX . "product_attribute (name) VALUES (?)";
+        $query = "INSERT INTO " . PREFIX . "product_attribute (name, value) VALUES (?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("s", $name);
+        $stmt->bind_param("ss", $name, $value);
         $stmt->execute();
 
         return $stmt->insert_id;
     }
 
-    public function addAttributeValue($user_id, $product_id, $attribute_id, $value, $quantity, $group_id = null, $parent_attribute_id = null) {
+    public function addAttributeValue($user_id, $product_id, $attribute_id, $value, $quantity, $group_id = null, $parent_attribute_id = null, $additional_value, $operation_type) {
         global $conn;
     
         $created_at = date('Y-m-d H:i:s');
         $created_by_user_id = $user_id;
     
         $query = "INSERT INTO " . PREFIX . "product_attribute_value 
-                  (product_id, attribute_id, value, quantity, group_id, parent_attribute_id, created_at, created_by_user_id) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                  (product_id, attribute_id, value, quantity, group_id, parent_attribute_id, additional_value, operation_type, created_at, created_by_user_id) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("iisiiiss", $product_id, $attribute_id, $value, $quantity, $group_id, $parent_attribute_id, $created_at, $created_by_user_id);
+        $stmt->bind_param("iisiiidsss", $product_id, $attribute_id, $value, $quantity, $group_id, $parent_attribute_id, $additional_value, $operation_type, $created_at, $created_by_user_id);
         $stmt->execute();
     
         if (self::$insertedId === null) {
@@ -121,7 +132,7 @@ class ProductStockModel {
         return self::$insertedId;
     }
 
-    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation) {
+    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type) {
         global $conn;
     
         if (!$this->stockOptionExists($product_id, $id, $attribute_id)) {
@@ -153,25 +164,38 @@ class ProductStockModel {
         }
     
         $parent_attribute_id = $current_quantity_data['parent_attribute_id'];
-    
-        $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
-                    quantity = CASE WHEN id = ? THEN ? ELSE quantity END, 
-                    updated_at = NOW(),
-                    updated_by_user_id = ?
-                WHERE product_id = ? AND attribute_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiiii", $id, $new_quantity, $user_id, $product_id, $attribute_id);
+
+        if ($additional_value !== null && $operation_type !== null) {
+            $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
+                        quantity = CASE WHEN id = ? THEN ? ELSE quantity END, 
+                        additional_value = ?, 
+                        operation_type = ?,
+                        updated_at = NOW(),
+                        updated_by_user_id = ?
+                    WHERE product_id = ? AND id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iidsiii", $id, $new_quantity, $additional_value, $operation_type, $user_id, $product_id, $id);
+        } else {
+            $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
+                        quantity = CASE WHEN id = ? THEN ? ELSE quantity END, 
+                        updated_at = NOW(),
+                        updated_by_user_id = ?
+                    WHERE product_id = ? AND id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iiiii", $id, $new_quantity, $user_id, $product_id, $id);
+        }
+        
         $stmt->execute();
-    
+        
         if ($stmt->affected_rows > 0) {
             $new_parent_quantity = $this->getCurrentQuantityParent($product_id, $parent_attribute_id, $attribute_id)['quantity'];
-    
+        
             if ($operation === 'add') {
                 $new_parent_quantity += $quantity;
             } elseif ($operation === 'subtract') {
                 $new_parent_quantity -= $quantity;
             }
-    
+        
             $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET 
                                 quantity = ?, 
                                 updated_at = NOW(), 
@@ -180,7 +204,7 @@ class ProductStockModel {
             $stmt_parent = $conn->prepare($sql_parent);
             $stmt_parent->bind_param("iiii", $new_parent_quantity, $user_id, $product_id, $parent_attribute_id);
             $stmt_parent->execute();
-    
+        
             if ($stmt_parent->affected_rows > 0) {
                 return createResponse("Opção de estoque atualizada com sucesso.", 200);
             } else {
@@ -189,6 +213,7 @@ class ProductStockModel {
         } else {
             return createResponse("Falha ao atualizar a opção de estoque.", 500);
         }
+        
     }
     
     private function stockOptionExists($product_id, $id, $attribute_id) {
