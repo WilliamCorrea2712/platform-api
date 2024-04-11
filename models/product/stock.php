@@ -15,8 +15,8 @@ class ProductStockModel {
         if (!isset($first_option['product_id'])) {
             return createResponse("O campo 'product_id' é obrigatório.", 400);
         }
-        $product_id = $first_option['product_id'];
 
+        $product_id = $first_option['product_id'];
         if (!itemExists("product", "product_id", $product_id)) {
             return createResponse("Produto não encontrado.", 404);
         }
@@ -212,11 +212,10 @@ class ProductStockModel {
             }
         } else {
             return createResponse("Falha ao atualizar a opção de estoque.", 500);
-        }
-        
+        }        
     }
     
-    private function stockOptionExists($product_id, $id, $attribute_id) {
+    public function stockOptionExists($product_id, $id, $attribute_id) {
         global $conn;
 
         $sql = "SELECT * FROM " . PREFIX . "product_attribute_value WHERE product_id = ? AND id = ? AND attribute_id = ?";
@@ -345,6 +344,71 @@ class ProductStockModel {
             return createResponse("Opções de estoque excluídas com sucesso.", 200);
         } else {
             return createResponse("Falha ao excluir as opções de estoque.", 500);
+        }
+    }
+
+    public function saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity) {
+        global $conn;
+    
+        $existing_entry = $this->getTemporaryCartEntry($product_id, $id, $attribute_id);
+    
+        if ($existing_entry) {
+            $new_quantity = $existing_entry['quantity'] + $quantity;
+            $sql = "UPDATE " . PREFIX . "temporary_cart SET quantity = ? WHERE product_id = ? AND id = ? AND attribute_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iiii", $new_quantity, $product_id, $id, $attribute_id);
+            $stmt->execute();
+    
+            if ($stmt->affected_rows > 0) {
+                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, 'subtract', null, null);
+                return ['status' => 200, 'message' => "Quantidade atualizada no carrinho temporário com sucesso."];
+            } else {
+                return ['status' => 500, 'message' => "Falha ao atualizar a quantidade no carrinho temporário."];
+            }
+        } else {
+            $sql = "INSERT INTO " . PREFIX . "temporary_cart (user_id, product_id, id, attribute_id, quantity) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("iiiii", $user_id, $product_id, $id, $attribute_id, $quantity);
+            $stmt->execute();
+    
+            if ($stmt->affected_rows > 0) {
+                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, 'subtract', null, null);
+                return ['status' => 200, 'message' => "Dados salvos no carrinho temporário com sucesso."];
+            } else {
+                return ['status' => 500, 'message' => "Falha ao salvar os dados no carrinho temporário."];
+            }
+        }
+    }
+    
+    
+    public function getTemporaryCartEntry($product_id, $id, $attribute_id) {
+        global $conn;
+    
+        $sql = "SELECT * FROM " . PREFIX . "temporary_cart WHERE product_id = ? AND id = ? AND attribute_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $product_id, $id, $attribute_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        } else {
+            return null;
+        }
+    }    
+
+    public function removeFromTemporaryCart($product_id, $id, $attribute_id) {
+        global $conn;
+
+        $sql = "DELETE FROM " . PREFIX . "temporary_cart WHERE product_id = ? AND id = ? AND attribute_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $product_id, $id, $attribute_id);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            return ['status' => 200, 'message' => "Item removido do carrinho temporário com sucesso."];
+        } else {
+            return ['status' => 404, 'message' => "Item não encontrado no carrinho temporário."];
         }
     }
 }
