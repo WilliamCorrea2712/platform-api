@@ -18,11 +18,9 @@ function insertLog($user_id, $entity_id_string) {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssi", $entity_type, $entity_id, $user_id);
 
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
-    }
-}
+    $success = $stmt->execute();
+    $stmt->close();
 
+    return $success;
+}
 ?>

@@ -70,11 +70,9 @@ date_default_timezone_set('America/Sao_Paulo');
                 $handler($user_id);
             } else {
                 return createResponse("Usuário não autenticado!", 400);
-                //echo json_encode(array("message" => "Usuário nao autenticado."));
             }
         }
     } else {
         return createResponse("Rota não encontrada!", 400);
-        //echo "Rota não encontrada!";
     }
 ?>

@@ -49,23 +49,40 @@ function existsInTable($table, $column, $value) {
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
+    $stmt->close();
     return $row['total'] > 0;
 }
 
 function customerExists($customer_id) {
-    return existsInTable('customers', 'id', $customer_id);
+    global $conn;
+
+    $exists = existsInTable('customers', 'id', $customer_id);
+    $conn->close();
+    return $exists;
 }
 
 function customerExistsByEmail($email) {
-    return existsInTable('customers', 'email', $email);
+    global $conn;
+
+    $exists = existsInTable('customers', 'email', $email);
+    $conn->close();
+    return $exists;
 }
 
 function userExists($name, $email) {
-    return existsInTable('user', 'name', $name) || userEmailExists($email);
+    global $conn;
+
+    $exists = existsInTable('user', 'name', $name) || userEmailExists($email);
+    $conn->close();
+    return $exists;
 }
 
 function userEmailExists($email) {
-    return existsInTable('user', 'email', $email);
+    global $conn;
+
+    $exists = existsInTable('user', 'email', $email);
+    $conn->close();
+    return $exists;
 }
 
 function itemExists($table, $id_column, $item_id) {
@@ -112,6 +129,7 @@ function getProductImages($product_id) {
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
+    $stmt->close();
     return $row['total'] ;
 }
 
@@ -212,7 +230,6 @@ function cpfExists($cpf, $customer_id = null) {
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
-
     $stmt->close();
 
     return $row['count'] > 0;
@@ -230,8 +247,6 @@ function is_valid_image($file_tmp_name, $file_type) {
             return true;
         }
     }
-
     return false;
 }
-
 ?>
