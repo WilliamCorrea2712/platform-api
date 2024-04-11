@@ -81,6 +81,22 @@ function getAllProducts($product_id = null) {
                 'image_name' => $row_image['name'],
             );
         }
+        $stmt_images->close();
+
+        $sql_stock = "SELECT * FROM " . PREFIX . "product_attribute_value WHERE product_id = ?";
+        $stmt_stock = $conn->prepare($sql_stock);
+        $stmt_stock->bind_param("i", $product_id);
+        $stmt_stock->execute();
+        $result_stock = $stmt_stock->get_result();
+
+        $stock = array();
+        while ($row_stock = $result_stock->fetch_assoc()) {
+            $stock[] = array(
+                'value' => $row_stock['value'],
+                'quantity' => $row_stock['quantity']
+            );
+        }
+        $stmt_stock->close();
 
         $products[$product_id] = array(
             'product_id' => $product_id,
@@ -104,14 +120,11 @@ function getAllProducts($product_id = null) {
             'meta_description' => $row['meta_description'],
             'meta_keyword' => $row['meta_keyword'],
             'images' => $images,
+            'stock' => $stock,
         );
-        
-        $stmt_images->close();
     }
-
     return createResponse($products, 200);
 }
-
 
 function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume) {
     global $conn;
@@ -249,10 +262,32 @@ function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $p
 function deleteProductFromDatabase($user_id, $product_id) {
     global $conn;
 
+    $sql_image = "DELETE FROM " . PREFIX . "product_image WHERE product_id = ?";
+    $stmt_image = $conn->prepare($sql_image);
+    $stmt_image->bind_param("i", $product_id);
+
+    $stmt_image->execute();
+
+    if ($stmt_image->affected_rows <= 0 && $stmt_image->errno != 0) {
+        $stmt_image->close();
+        return createResponse("Erro ao excluir as imagens do produto.", 500);
+    }
+
+    $sql_stock = "DELETE FROM " . PREFIX . "product_attribute_value WHERE product_id = ?";
+    $stmt_stock = $conn->prepare($sql_stock);
+    $stmt_stock->bind_param("i", $product_id);
+
+    $stmt_stock->execute();
+
+    if ($stmt_stock->affected_rows <= 0 && $stmt_stock->errno != 0) {
+        $stmt_stock->close();
+        return createResponse("Erro ao excluir o estoque do produto.", 500);
+    }
+
     $sql_description = "DELETE FROM " . PREFIX . "product_description WHERE product_id = ?";
     $stmt_description = $conn->prepare($sql_description);
     $stmt_description->bind_param("i", $product_id);
-    
+
     $stmt_description->execute();
 
     if ($stmt_description->affected_rows <= 0 && $stmt_description->errno != 0) {
@@ -263,13 +298,14 @@ function deleteProductFromDatabase($user_id, $product_id) {
     $sql_product = "DELETE FROM " . PREFIX . "product WHERE product_id = ? ";
     $stmt_product = $conn->prepare($sql_product);
     $stmt_product->bind_param("i", $product_id);
-    
+
     $stmt_product->execute();
 
     if ($stmt_product->affected_rows > 0) {
         insertLog($user_id, "product_id=$product_id", "deleted");
+        
         $stmt_product->close();
-        return createResponse("Produto excluído com sucesso.", 200);
+        return createResponse("Produto, estoque e imagens excluídos com sucesso.", 200);
     } else {
         $stmt_product->close();
         return createResponse("Erro ao excluir o produto.", 500);

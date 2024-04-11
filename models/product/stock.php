@@ -120,7 +120,6 @@ class ProductStockModel {
         $stmt->close();
         return self::$insertedId;
     }
-    
 
     public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation) {
         global $conn;

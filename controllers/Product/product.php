@@ -21,7 +21,7 @@ function addProduct($user_id) {
             $width = isset($data['width']) ? $data['width'] : null;
             $height = isset($data['height']) ? $data['height'] : null;
             $sku = isset($data['sku']) ? $data['sku'] : null;
-            $sort_order = isset($data['status']) ? $data['sort_order'] : null;
+            $sort_order = isset($data['sort_order']) ? $data['sort_order'] : null;
             $minimum = isset($data['minimum']) ? $data['minimum'] : null;
             $status = isset($data['status']) ? $data['status'] : null;
             $name = $data['name'];
@@ -36,8 +36,6 @@ function addProduct($user_id) {
 
             if (is_numeric($product_id)) {
                 return createResponse("Produto adicionado com sucesso.", 201);
-            } else {
-                return createResponse($product_id, 500);
             }
         } else {
             return createResponse("Os campos 'name', 'description', 'price' e 'weight' são obrigatórios.", 400);
@@ -113,8 +111,12 @@ function deleteProduct($user_id) {
             }
 
             $result = deleteProductFromDatabase($user_id, $product_id);
-
-            return createResponse($result['response'], $result['status']);
+            
+            if ($result !== null && isset($result['response']) && isset($result['status'])) {
+                return createResponse($result['response'], $result['status']);
+            } elseif ($result !== null && isset($result['error'])) {
+                return createResponse($result['error'], 500);
+            }            
         } else {
             return createResponse("O ID do produto é obrigatório.", 400);
         }
@@ -170,11 +172,7 @@ function addProductImages($user_id) {
                 }
 
                 $image_url = 'public/images/' . $image_unique_name;
-                $result = saveImageToDatabase($user_id, $product_id, $image_unique_name, $image_url, pathinfo($image_name, PATHINFO_FILENAME));
-
-                if ($result['status'] !== 200) {
-                    $errors[] = $result['response']['error'];
-                }
+                saveImageToDatabase($user_id, $product_id, $image_unique_name, $image_url, pathinfo($image_name, PATHINFO_FILENAME));
             }
 
             if (!empty($errors)) {
