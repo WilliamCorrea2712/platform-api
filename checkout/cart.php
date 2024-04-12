@@ -88,6 +88,10 @@ class ShoppingCart {
     }
 
     public static function clearSession() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return createResponse("Método não permitido. Apenas POST é permitido.", 400);
+        }
+        
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
