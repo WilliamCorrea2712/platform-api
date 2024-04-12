@@ -4,7 +4,6 @@ session_start();
 require_once __DIR__ . '/../global/helpers.php';
 require_once __DIR__ . '/../models/product/stock.php';
 
-
 class ShoppingCart {
     public static function addCart($user_id) {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -13,9 +12,9 @@ class ShoppingCart {
             return createResponse("Método não permitido. Apenas POST é permitido.", 400);
         }
 
-        if(isset($data['operation'])){
-            if ($data['operation'] !== 'add') {
-                return createResponse("Operação inválida. Apenas 'add' é permitido.", 400);
+        if(isset($data['operation'])){            
+            if ($data['operation'] !== 'add' && $data['operation'] !== 'subtract') {
+                return createResponse("Operação inválida. Apenas 'add' ou 'subtract' são permitidos.", 400);
             }
         } else {
             return createResponse("O campo 'operation' é obrigatório.", 400);
@@ -32,6 +31,7 @@ class ShoppingCart {
             $_SESSION['cart'] = array();
         }
 
+        $operation = $data['operation'];
         $product_id = $data['product_id'];
         $id = $data['id'];
         $attribute_id = $data['attribute_id'];
@@ -59,12 +59,13 @@ class ShoppingCart {
             );
         }
 
-        $result = $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity);
-        if ($result['status'] !== 200) {
+        $result = $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, session_id());
+
+        if (isset($result['status']) && $result['status'] !== 200) {
             return createResponse($result['message'], $result['status']);
+        } else {        
+            return createResponse("Produto adicionado ao carrinho com sucesso.", 200);
         }
-        
-        return createResponse("Produto adicionado ao carrinho com sucesso.", 200);
     }
 
     private static function getProductKey($cart, $id, $attribute_id) {
@@ -74,6 +75,17 @@ class ShoppingCart {
             }
         }
         return false;
+    }
+
+    public function clearSession($session_id) {
+        $productStockModel = new ProductStockModel();
+        $result = $productStockModel->restoreStockFromCart($session_id);
+
+        if ($result['status'] === 200) {
+            echo "Estoque restaurado com sucesso.";
+        } else {
+            echo "Falha ao restaurar o estoque: " . $result['message'];
+        }
     }
 }
 

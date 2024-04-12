@@ -132,7 +132,7 @@ class ProductStockModel {
         return self::$insertedId;
     }
 
-    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type) {
+    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type, $stock_cart = null) {
         global $conn;
     
         if (!$this->stockOptionExists($product_id, $id, $attribute_id)) {
@@ -165,24 +165,33 @@ class ProductStockModel {
     
         $parent_attribute_id = $current_quantity_data['parent_attribute_id'];
 
+        if($stock_cart === 'stock_cart'){
+            $qtd_stock = $this->getTemporaryCartEntry($product_id, $id, $attribute_id);
+            $qtd_stock_cart = $qtd_stock['quantity'];
+        } else {
+            $qtd_stock_cart = 0;
+        }
+
         if ($additional_value !== null && $operation_type !== null) {
             $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
                         quantity = CASE WHEN id = ? THEN ? ELSE quantity END, 
                         additional_value = ?, 
                         operation_type = ?,
                         updated_at = NOW(),
-                        updated_by_user_id = ?
+                        updated_by_user_id = ?,
+                        stock_cart = ?
                     WHERE product_id = ? AND id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iidsiii", $id, $new_quantity, $additional_value, $operation_type, $user_id, $product_id, $id);
+            $stmt = $conn->prepare($sql);            
+            $stmt->bind_param("iidsiiii", $id, $new_quantity, $additional_value, $operation_type, $user_id, $qtd_stock_cart, $product_id, $id);
         } else {
             $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
                         quantity = CASE WHEN id = ? THEN ? ELSE quantity END, 
                         updated_at = NOW(),
-                        updated_by_user_id = ?
+                        updated_by_user_id = ?,
+                        stock_cart = ?
                     WHERE product_id = ? AND id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiiii", $id, $new_quantity, $user_id, $product_id, $id);
+            $stmt->bind_param("iiiiii", $id, $new_quantity, $user_id, $qtd_stock_cart, $product_id, $id);
         }
         
         $stmt->execute();
@@ -199,7 +208,7 @@ class ProductStockModel {
             $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET 
                                 quantity = ?, 
                                 updated_at = NOW(), 
-                                updated_by_user_id = ? 
+                                updated_by_user_id = ?
                             WHERE product_id = ? AND id = ?";
             $stmt_parent = $conn->prepare($sql_parent);
             $stmt_parent->bind_param("iiii", $new_parent_quantity, $user_id, $product_id, $parent_attribute_id);
@@ -347,39 +356,61 @@ class ProductStockModel {
         }
     }
 
-    public function saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity) {
+    public function saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $session) {
         global $conn;
+
+        $current_quantity_data = $this->getCurrentQuantity($product_id, $id, $attribute_id);
+    
+        if ($current_quantity_data['parent_attribute_id'] === null) {
+            return createResponse("Opção de estoque não pode ser alterada, verifique o ID para não alterar o atributo pai.", 400);
+        }
+    
+        $new_quantity = $current_quantity_data['quantity'];
+    
+        if ($operation === 'add') {
+            $new_quantity += $quantity;
+        } elseif ($operation === 'subtract') {
+            $new_quantity -= $quantity;
+        }
+    
+        if ($new_quantity < 0) {
+            return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
+        }
     
         $existing_entry = $this->getTemporaryCartEntry($product_id, $id, $attribute_id);
     
         if ($existing_entry) {
-            $new_quantity = $existing_entry['quantity'] + $quantity;
+            if ($operation === 'add') {
+                $new_quantityCart = $existing_entry['quantity'] - $quantity;
+            } elseif ($operation === 'subtract') {
+                $new_quantityCart = $existing_entry['quantity'] + $quantity;
+            }
+        
             $sql = "UPDATE " . PREFIX . "temporary_cart SET quantity = ? WHERE product_id = ? AND id = ? AND attribute_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiii", $new_quantity, $product_id, $id, $attribute_id);
+            $stmt->bind_param("iiii", $new_quantityCart, $product_id, $id, $attribute_id);
             $stmt->execute();
     
             if ($stmt->affected_rows > 0) {
-                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, 'subtract', null, null);
+                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, null, null, 'stock_cart');
                 return ['status' => 200, 'message' => "Quantidade atualizada no carrinho temporário com sucesso."];
             } else {
                 return ['status' => 500, 'message' => "Falha ao atualizar a quantidade no carrinho temporário."];
             }
         } else {
-            $sql = "INSERT INTO " . PREFIX . "temporary_cart (user_id, product_id, id, attribute_id, quantity) VALUES (?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO " . PREFIX . "temporary_cart (by_user_id, product_id, id, attribute_id, quantity, session_id) VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiiii", $user_id, $product_id, $id, $attribute_id, $quantity);
+            $stmt->bind_param("iiiiis", $user_id, $product_id, $id, $attribute_id, $quantity, $session);
             $stmt->execute();
     
             if ($stmt->affected_rows > 0) {
-                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, 'subtract', null, null);
+                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, null, null, 'stock_cart');
                 return ['status' => 200, 'message' => "Dados salvos no carrinho temporário com sucesso."];
             } else {
                 return ['status' => 500, 'message' => "Falha ao salvar os dados no carrinho temporário."];
             }
         }
     }
-    
     
     public function getTemporaryCartEntry($product_id, $id, $attribute_id) {
         global $conn;
@@ -411,5 +442,43 @@ class ProductStockModel {
             return ['status' => 404, 'message' => "Item não encontrado no carrinho temporário."];
         }
     }
+
+    public function restoreStockFromCart($session_id) {
+        global $conn;
+    
+        $sql = "SELECT product_id, id, attribute_id, quantity FROM " . PREFIX . "temporary_cart WHERE session_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $session_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $product_id = $row['product_id'];
+                $id = $row['id'];
+                $attribute_id = $row['attribute_id'];
+                $quantity = $row['quantity'];
+    
+                $sql_update = "UPDATE " . PREFIX . "product_attribute_value SET stock = stock + ? WHERE product_id = ? AND id = ? AND attribute_id = ?";
+                $stmt_update = $conn->prepare($sql_update);
+                $stmt_update->bind_param("iiii", $quantity, $product_id, $id, $attribute_id);
+                $stmt_update->execute();
+    
+                if ($stmt_update->affected_rows <= 0) {
+                    return ['status' => 500, 'message' => "Falha ao restaurar o estoque para o produto $product_id, ID $id, Atributo $attribute_id."];
+                }
+            }
+            $sql_delete = "DELETE FROM " . PREFIX . "temporary_cart WHERE session_id = ?";
+            $stmt_delete = $conn->prepare($sql_delete);
+            $stmt_delete->bind_param("s", $session_id);
+            $stmt_delete->execute();
+    
+            return ['status' => 200, 'message' => "Estoque restaurado com sucesso para os itens no carrinho."];
+        } else {
+            return ['status' => 404, 'message' => "Nenhum item encontrado no carrinho com o session_id fornecido."];
+        }
+    }
+    
+
 }
 ?>

@@ -54,34 +54,22 @@ function existsInTable($table, $column, $value) {
 }
 
 function customerExists($customer_id) {
-    global $conn;
-
     $exists = existsInTable('customers', 'id', $customer_id);
-    $conn->close();
     return $exists;
 }
 
 function customerExistsByEmail($email) {
-    global $conn;
-
     $exists = existsInTable('customers', 'email', $email);
-    $conn->close();
     return $exists;
 }
 
 function userExists($name, $email) {
-    global $conn;
-
     $exists = existsInTable('user', 'name', $name) || userEmailExists($email);
-    $conn->close();
     return $exists;
 }
 
 function userEmailExists($email) {
-    global $conn;
-
     $exists = existsInTable('user', 'email', $email);
-    $conn->close();
     return $exists;
 }
 
