@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . "/../security/token.php"; 
 require_once(__DIR__ . '/../config.php');
+require_once __DIR__ . "/../global/helpers.php";
+
 date_default_timezone_set('America/Sao_Paulo');
 
     $routes = array(
@@ -35,6 +37,8 @@ date_default_timezone_set('America/Sao_Paulo');
         PRODUCT . "deleteStockOptions" => "deleteStockOptions",
         PRODUCT . "getStockOptions" => "getStockOptions",
         CHECKOUT. "addCart" => "ShoppingCart::addCart", 
+        CHECKOUT. "clearSession" => "ShoppingCart::clearSession", 
+        CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",
     );
 
     if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -63,6 +67,12 @@ date_default_timezone_set('America/Sao_Paulo');
 
             if (isset($_GET['id'])){
                 $handler($_GET['id']);
+            } else{
+                $handler();
+            }
+        } else if(strpos($route, "checkout/getProductsCart") !== false){
+            if (isset($_GET['session_id'])){
+                $handler($_GET['session_id']);
             } else{
                 $handler();
             }

@@ -3,6 +3,7 @@ session_start();
 
 require_once __DIR__ . '/../global/helpers.php';
 require_once __DIR__ . '/../models/product/stock.php';
+require_once __DIR__ . "/../models/checkout/cart.php";
 
 class ShoppingCart {
     public static function addCart($user_id) {
@@ -63,8 +64,6 @@ class ShoppingCart {
 
         if (isset($result['status']) && $result['status'] !== 200) {
             return createResponse($result['message'], $result['status']);
-        } else {        
-            return createResponse("Produto adicionado ao carrinho com sucesso.", 200);
         }
     }
 
@@ -77,16 +76,35 @@ class ShoppingCart {
         return false;
     }
 
-    public function clearSession($session_id) {
-        $productStockModel = new ProductStockModel();
-        $result = $productStockModel->restoreStockFromCart($session_id);
-
-        if ($result['status'] === 200) {
-            echo "Estoque restaurado com sucesso.";
+    public static function getProductsCart($session_id) {
+        $cartModel = new CartModel();
+        $products = $cartModel->getProductsCart($session_id);
+    
+        if ($products) {
+            return createResponse($products, 200);
         } else {
-            echo "Falha ao restaurar o estoque: " . $result['message'];
+            return createResponse("Nenhum produto encontrado no carrinho.", 404);
+        }
+    }
+
+    public static function clearSession() {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if(isset($_SESSION['session_id'])) {
+            $session_id = $_SESSION['session_id'];
+            $productStockModel = new ProductStockModel();
+            $result = $productStockModel->restoreStockFromCart($session_id);
+
+            if ($result['status'] === 200) {
+                return createResponse("Estoque restaurado com sucesso.", 200);
+            } else {
+                return createResponse("Falha ao restaurar o estoque: " . $result['message'], 500);
+            }
+        } else {
+            return createResponse("A sessão ainda não foi definida.", 400);
         }
     }
 }
-
 ?>

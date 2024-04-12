@@ -372,7 +372,7 @@ class ProductStockModel {
         } elseif ($operation === 'subtract') {
             $new_quantity -= $quantity;
         }
-    
+
         if ($new_quantity < 0) {
             return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
         }
@@ -381,6 +381,9 @@ class ProductStockModel {
     
         if ($existing_entry) {
             if ($operation === 'add') {
+                if($quantity > $existing_entry['quantity']){
+                    return createResponse("Quantidade enviada é maior do que o atual carrinho", 400);
+                }
                 $new_quantityCart = $existing_entry['quantity'] - $quantity;
             } elseif ($operation === 'subtract') {
                 $new_quantityCart = $existing_entry['quantity'] + $quantity;
@@ -428,21 +431,6 @@ class ProductStockModel {
         }
     }    
 
-    public function removeFromTemporaryCart($product_id, $id, $attribute_id) {
-        global $conn;
-
-        $sql = "DELETE FROM " . PREFIX . "temporary_cart WHERE product_id = ? AND id = ? AND attribute_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $product_id, $id, $attribute_id);
-        $stmt->execute();
-
-        if ($stmt->affected_rows > 0) {
-            return ['status' => 200, 'message' => "Item removido do carrinho temporário com sucesso."];
-        } else {
-            return ['status' => 404, 'message' => "Item não encontrado no carrinho temporário."];
-        }
-    }
-
     public function restoreStockFromCart($session_id) {
         global $conn;
     
@@ -468,6 +456,7 @@ class ProductStockModel {
                     return ['status' => 500, 'message' => "Falha ao restaurar o estoque para o produto $product_id, ID $id, Atributo $attribute_id."];
                 }
             }
+
             $sql_delete = "DELETE FROM " . PREFIX . "temporary_cart WHERE session_id = ?";
             $stmt_delete = $conn->prepare($sql_delete);
             $stmt_delete->bind_param("s", $session_id);
@@ -478,7 +467,5 @@ class ProductStockModel {
             return ['status' => 404, 'message' => "Nenhum item encontrado no carrinho com o session_id fornecido."];
         }
     }
-    
-
 }
 ?>
