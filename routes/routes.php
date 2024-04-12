@@ -45,6 +45,8 @@ date_default_timezone_set('America/Sao_Paulo');
         $route = $_GET['route'];
         $handler = $routes[$route];
 
+        $user_id = verifyToken()->user_id;
+
         if (strpos($route, "account/") === 0) {
             require_once __DIR__ . "/../controllers/account/account.php";
         } else if (strpos($route, "user/") === 0) {
@@ -70,15 +72,13 @@ date_default_timezone_set('America/Sao_Paulo');
             } else{
                 $handler();
             }
-        } else if(strpos($route, "checkout/getProductsCart") !== false){
+        } else if(strpos($route, "checkout/getProductsCart") !== false || strpos($route, "checkout/clearSession") !== false){
             if (isset($_GET['session_id'])){
-                $handler($_GET['session_id']);
+                $handler($user_id, $_GET['session_id']);
             } else{
                 $handler();
             }
         } else {
-            $user_id = verifyToken()->user_id;
-
             if(isset($user_id) && $user_id > 0){
                 $handler($user_id);
             } else {

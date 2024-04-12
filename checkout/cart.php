@@ -87,25 +87,26 @@ class ShoppingCart {
         }
     }
 
-    public static function clearSession() {
+    public static function clearSession($user_id, $session_id) {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return createResponse("Método não permitido. Apenas POST é permitido.", 400);
         }
-        
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        if(isset($_SESSION['session_id'])) {
-            $session_id = $_SESSION['session_id'];
+        if(isset($session_id)) {
             $productStockModel = new ProductStockModel();
-            $result = $productStockModel->restoreStockFromCart($session_id);
+            $result = $productStockModel->restoreStockFromCart($user_id, $session_id);
 
-            if ($result['status'] === 200) {
-                return createResponse("Estoque restaurado com sucesso.", 200);
-            } else {
-                return createResponse("Falha ao restaurar o estoque: " . $result['message'], 500);
-            }
+            if ($result && isset($result['status'])) {
+                if ($result['status'] === 200) {
+                    return createResponse("Estoque restaurado com sucesso.", 200);
+                } else {
+                    return createResponse("Falha ao restaurar o estoque: " . $result['message'], 500);
+                }
+            }          
         } else {
             return createResponse("A sessão ainda não foi definida.", 400);
         }
