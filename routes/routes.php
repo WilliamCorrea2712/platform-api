@@ -65,7 +65,8 @@ date_default_timezone_set('America/Sao_Paulo');
         } else if(strpos($route, "account/getCustomers") !== false || 
                 strpos($route, "product/getCategories") !== false || 
                 strpos($route, "product/getBrands") !== false ||
-                strpos($route, "product/getProducts") !== false){
+                strpos($route, "product/getProducts") !== false ||
+                strpos($route, "user/getUsers") !== false){
 
             if (isset($_GET['id'])){
                 $handler($_GET['id']);

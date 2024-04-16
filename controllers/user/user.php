@@ -4,10 +4,12 @@ require_once __DIR__ . '/../../global/helpers.php';
 
 function addUser() {
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        if (isset($_POST['name']) && isset($_POST['password']) && isset($_POST['email'])) {
-            $name = $_POST['name'];
-            $password = $_POST['password'];
-            $email = $_POST['email'];
+        $data = json_decode(file_get_contents('php://input'), true);
+
+        if (isset($data['name']) && isset($data['password']) && isset($data['email'])) {
+            $name = $data['name'];
+            $password = $data['password'];
+            $email = $data['email'];
 
             if (userExists($name, $email)) {
                 return createResponse("Usuário já existe.", 400);
@@ -32,8 +34,8 @@ function addUser() {
     }
 }
 
-function getUsers() {
-    $users = getAllUsers();
+function getUsers($id = null) {
+    $users = getAllUsers($id);
 
     if (!empty($users)) {
         return createResponse(array('users' => $users), 200); 

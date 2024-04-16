@@ -30,11 +30,23 @@ function addUserWithToken($name, $password, $email) {
     }
 }
 
-function getAllUsers() {
+function getAllUsers($id = null) {
     global $conn;
 
     $sql = "SELECT id, name, email, password FROM " . PREFIX . "user";
-    $result = $conn->query($sql);
+
+    if ($id !== null) {
+        $sql .= " WHERE id = ?";
+    }
+
+    $stmt = $conn->prepare($sql);
+
+    if ($id !== null) {
+        $stmt->bind_param("i", $id);
+    }
+
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         $users = array();
@@ -47,7 +59,7 @@ function getAllUsers() {
             );
         }
 
-        $conn->close();
+        $stmt->close();
         return $users; 
     } else {
         return array();
