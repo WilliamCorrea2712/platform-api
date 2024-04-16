@@ -69,7 +69,7 @@ class ProductStockModel {
 
         return createResponse("Opções de estoque adicionadas com sucesso.", 201);
     }
-
+    
     private function checkAttributeValueExists($product_id, $attribute_id, $value) {
         global $conn;
 
@@ -472,12 +472,13 @@ class ProductStockModel {
                         $stmt_delete = $conn->prepare($sql_delete);
                         $stmt_delete->bind_param("s", $session_id);
                         $stmt_delete->execute();
-                        
-                        return createResponse("Opção de estoque atualizada com sucesso.", 200);
+
+                        $stmt->close();
+
+                        return createResponse("Sessão e carrinho excluidos!", 200);
                     } else {
                         return createResponse("Falha ao atualizar a opção de estoque pai.", 500);
-                    }
-    
+                    }    
                 } else {
                     return ['status' => 500, 'message' => "Falha ao restaurar o estoque para o produto $product_id, ID $id, Atributo $attribute_id."];
                 }

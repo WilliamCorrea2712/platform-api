@@ -76,7 +76,7 @@ date_default_timezone_set('America/Sao_Paulo');
             if (isset($_GET['session_id'])){
                 $handler($user_id, $_GET['session_id']);
             } else{
-                $handler();
+                return createResponse("O 'session_id' é obrigatória!", 400);
             }
         } else {
             if(isset($user_id) && $user_id > 0){

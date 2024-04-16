@@ -36,9 +36,9 @@ function getUsers() {
     $users = getAllUsers();
 
     if (!empty($users)) {
-        return createResponse($users, 200);
+        return createResponse(array('users' => $users), 200); 
     } else {
-        return createResponse("Nenhum usuário encontrado.", 404);
+        return createResponse(array('error' => "Nenhum usuário encontrado."), 404);
     }
 }
 
@@ -96,13 +96,22 @@ function deleteUser($user_id){
 
 function login() {
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        if (isset($_POST['email']) && isset($_POST['password'])) {
-            $email = $_POST['email'];
-            $password = $_POST['password'];
+        $postData = json_decode(file_get_contents('php://input'), true);
+
+        if (isset($postData['email']) && isset($postData['password'])) {
+            $email = $postData['email'];
+            $password = $postData['password'];
+
+            if (empty($email)) {
+                return createResponse("O email é obrigatório!", 400);
+            }
+            if (empty($password)) {
+                return createResponse("A senha é obrigatória!", 400);
+            }
 
             $result = loginUser($email, $password);
 
-            return createResponse($result, 200);
+            return $result;
         } else {
             return createResponse("Dados incompletos.", 400);
         }
@@ -110,4 +119,5 @@ function login() {
         return createResponse("Método não permitido.", 405);
     }
 }
+
 ?>

@@ -2,16 +2,16 @@
 require_once __DIR__ . '/../mysql/conn.php';
 require_once __DIR__ . '/../config.php';
 
-/*function createResponse($message, $status) {
+function createResponse($message, $status) {
     http_response_code($status);
     if ($status >= 200 && $status < 400) {
         echo json_encode(array("message" => $message), JSON_UNESCAPED_UNICODE);
     } else {
         echo json_encode(array("error" => $message), JSON_UNESCAPED_UNICODE);
     }
-}*/
+}
 
-function createResponse($message, $status) {
+/*function createResponse($message, $status) {
     http_response_code($status);
     if ($status >= 200 && $status < 400) {
         if (is_array($message)) {
@@ -38,7 +38,7 @@ function formatData($data) {
     } else {
         return $data;
     }
-}
+}*/
 
 function existsInTable($table, $column, $value) {
     global $conn;

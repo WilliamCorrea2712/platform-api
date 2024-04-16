@@ -48,9 +48,9 @@ function getAllUsers() {
         }
 
         $conn->close();
-        return createResponse($users, 200);
+        return $users; 
     } else {
-        return createResponse(array(), 200);
+        return array();
     }
 }
 
@@ -120,7 +120,7 @@ function loginUser($email, $password) {
             $token = generateToken($user_id);
             return createResponse(array("user_id" => $user_id, "token" => $token), 200);
         } else {
-            return createResponse("Senha incorreta.", 401);
+            return createResponse("Senha Incorreta.", 401);
         }
     } else {
         return createResponse("E-mail não encontrado.", 404);
