@@ -54,13 +54,17 @@ function editUser($user_id) {
 
             if(isset($data['password'])){
                 $password = $data['password'];
+                
+                if(strlen($password) < 6) {
+                    return createResponse("A senha deve ter pelo menos 6 caracteres.", 401);
+                }
             } else {
                 $password = null;
             }
 
-            if ((int)$id != $user_id) {
+            /*if ((int)$id != $user_id) {
                 return createResponse("Você não tem permissão para editar este usuário.", 401);
-            }
+            }*/
 
             $result = updateUser($id, $name, $email, $password);
 

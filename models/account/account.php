@@ -34,6 +34,8 @@ function getAllCustomers($customer_id = null) {
         $sql .= " WHERE c.id = ?";
     }
 
+    $sql .= " ORDER BY c.name";
+
     $stmt = $conn->prepare($sql);
 
     if ($customer_id !== null) {
@@ -75,9 +77,9 @@ function getAllCustomers($customer_id = null) {
             }
         }
 
-        return createResponse(array_values($customers), 200);
+        return $customers;
     } else {
-        return createResponse("Nenhum cliente encontrado.", 404);
+        return array();
     }
 }
 

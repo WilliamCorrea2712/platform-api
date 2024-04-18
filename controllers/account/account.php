@@ -67,9 +67,9 @@ function getCustomers($customer_id = null) {
     $result = getAllCustomers($customer_id);
 
     if (!empty($result)) {
-        return createResponse($result, 200);
+        return createResponse(array('customers' => $result), 200); 
     } else {
-        return createResponse("Nenhum cliente encontrado.", 404);
+        return createResponse(array('error' => "Nenhum cliente encontrado."), 404);
     }
 }
 

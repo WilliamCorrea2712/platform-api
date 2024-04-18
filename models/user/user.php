@@ -39,6 +39,8 @@ function getAllUsers($id = null) {
         $sql .= " WHERE id = ?";
     }
 
+    $sql .= " ORDER BY name";
+
     $stmt = $conn->prepare($sql);
 
     if ($id !== null) {
