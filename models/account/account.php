@@ -3,16 +3,14 @@ require_once __DIR__ . '/../../mysql/conn.php';
 require_once __DIR__ . '/../../global/logs.php';
 require_once(__DIR__ . '/../../config.php');
 
-function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id) {
+function addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $password, $user_id) {
     global $conn;
 
-    if (customerExistsByEmail($email)) {
-        return createResponse("O cliente com o email fornecido já existe.", 400);
-    }
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    $sql = "INSERT INTO " . PREFIX . "customers (name, email, phone_number, birth_date, cnpj_cpf, rg_ie, type_person, sex, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO " . PREFIX . "customers (name, email, phone_number, birth_date, cnpj_cpf, rg_ie, type_person, sex, password, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssssssi", $name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id);
+    $stmt->bind_param("sssssssssi", $name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $hashed_password, $user_id);
 
     if ($stmt->execute()) {
         return createResponse("Cliente adicionado com sucesso.", 200);
@@ -25,7 +23,7 @@ function getAllCustomers($customer_id = null) {
     global $conn;
 
     $sql = "SELECT c.id, c.name, c.email, c.phone_number, c.birth_date, c.status, 
-                   c.cnpj_cpf, c.rg_ie, c.type_person, c.sex, 
+                   c.cnpj_cpf, c.rg_ie, c.type_person, c.sex, c.password,
                    a.id as address_id, a.street, a.city, a.state, a.zip_code 
             FROM " . PREFIX . "customers c
             LEFT JOIN " . PREFIX . "addresses a ON c.id = a.customer_id";
@@ -83,7 +81,7 @@ function getAllCustomers($customer_id = null) {
     }
 }
 
-function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex) {
+function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $password) {
     global $conn;
 
     if (!customerExists($customer_id)) {
@@ -120,6 +118,11 @@ function editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $b
     if ($sex !== null) {
         $sql .= "sex = ?, ";
         $params[] = $sex;
+    }
+    if ($password !== null) {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $sql .= "password = ?, ";
+        $params[] = $hashed_password;
     }
 
     $sql = rtrim($sql, ", ");

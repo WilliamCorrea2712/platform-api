@@ -14,7 +14,9 @@ function addCustomer($user_id) {
             array_key_exists('cnpj_cpf', $data) && 
             array_key_exists('rg_ie', $data) && 
             array_key_exists('type_person', $data) && 
-            array_key_exists('sex', $data)
+            array_key_exists('sex', $data) &&
+            array_key_exists('password', $data) &&
+            array_key_exists('confirmPassword', $data)
         ) {
             $name = $data['name'];
             $email = $data['email'];
@@ -24,9 +26,15 @@ function addCustomer($user_id) {
             $rg_ie = $data['rg_ie'];
             $type_person = $data['type_person'];
             $sex = $data['sex'];
+            $password = $data['password'];
+            $confirmPassword = $data['confirmPassword'];
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 return createResponse("O formato do email é inválido.", 400);
+            }
+
+            if (customerExistsByEmail($email)) {
+                return createResponse("O cliente com o email fornecido já existe.", 400);
             }
 
             if (!preg_match("/^\(\d{2}\)\s\d{4,5}-\d{4}$/", $phone_number)) {
@@ -53,8 +61,16 @@ function addCustomer($user_id) {
                 return createResponse("O tipo de pessoa fornecido é inválido. Deve ser 'fisica' ou 'juridica'.", 400);
             }
 
-            $result = addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $user_id);
-            return createResponse($result, 200);
+            if (strlen($password) < 6) {
+                return createResponse("A senha deve ter pelo menos 6 caracteres.", 400);
+            } else {
+                if ($password !== $confirmPassword) {
+                    return createResponse("A senha e a confirmação de senha não coincidem.", 400);
+                }
+            }
+
+            $result = addCustomerToDatabase($name, $email, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $password, $user_id);
+            return $result;
         } else {
             return createResponse("Dados incompletos.", 400);
         }
@@ -96,6 +112,16 @@ function editCustomer($user_id) {
             $rg_ie = isset($data['rg_ie']) ? $data['rg_ie'] : null;
             $type_person = isset($data['type_person']) ? $data['type_person'] : null;
             $sex = isset($data['sex']) ? $data['sex'] : null;
+            $password = isset($data['password']) ? $data['password'] : null;
+            $confirmPassword = isset($data['confirmPassword']) ? $data['confirmPassword'] : null;
+
+            if ($password !== null && strlen($password) < 6) {
+                return createResponse("A senha deve ter pelo menos 6 caracteres.", 400);
+            } else {
+                if ($password !== $confirmPassword) {
+                    return createResponse("A senha e a confirmação de senha não coincidem.", 400);
+                }
+            }
 
             if ($phone_number !== null && !preg_match("/^\(\d{2}\)\s\d{4,5}-\d{4}$/", $phone_number)) {
                 return createResponse("O formato do número de telefone é inválido. O formato esperado é (XX) XXXX-XXXX.", 400);
@@ -127,9 +153,9 @@ function editCustomer($user_id) {
                 return createResponse("Não é permitido alterar o e-mail.", 400);
             }
 
-            $result = editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex);
+            $result = editCustomerInDatabase($user_id, $customer_id, $name, $phone_number, $birth_date, $cnpj_cpf, $rg_ie, $type_person, $sex, $password);
 
-            return createResponse($result['response'], $result['status']);
+            return $result;
         } else {
             return createResponse("O ID do cliente é obrigatório.", 400);
         }
