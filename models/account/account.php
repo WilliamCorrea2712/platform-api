@@ -24,7 +24,8 @@ function getAllCustomers($customer_id = null) {
 
     $sql = "SELECT c.id, c.name, c.email, c.phone_number, c.birth_date, c.status, 
                    c.cnpj_cpf, c.rg_ie, c.type_person, c.sex, c.password,
-                   a.id as address_id, a.street, a.city, a.state, a.zip_code 
+                   a.id as address_id, a.street, a.city, a.state, a.zip_code, 
+                   a.name as nameAddress, a.number, a.country
             FROM " . PREFIX . "customers c
             LEFT JOIN " . PREFIX . "addresses a ON c.id = a.customer_id";
 
@@ -67,10 +68,13 @@ function getAllCustomers($customer_id = null) {
             if ($row['address_id'] !== null) {
                 $customers[$customer_id]['addresses'][] = array(
                     'id' => $row['address_id'],
+                    'nameAddress' => $row['nameAddress'],
+                    'number' => $row['number'],
                     'street' => $row['street'],
                     'city' => $row['city'],
                     'state' => $row['state'],
-                    'zip_code' => $row['zip_code']
+                    'zip_code' => $row['zip_code'],
+                    'country' => $row['country']
                 );
             }
         }
@@ -244,7 +248,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     $sql .= "updated_at = NOW(), updated_by_user_id = ? WHERE id = ?";
     $params[] = $user_id;
     $params[] = $address_id;
-
+    
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         return createResponse("Erro na preparação da declaração SQL: " . $conn->error, 500);
@@ -255,7 +259,7 @@ function editAddressInDatabase($user_id, $address_id, $street = null, $city = nu
     $success = $stmt->execute();
 
     if ($success) {
-        return createResponse("Endereço atualizado com sucesso.", 200);
+        return createResponse("Endereço(s) atualizado com sucesso.", 200);
     } else {
         return createResponse("Erro ao atualizar endereço: " . $stmt->error, 500);
     }

@@ -228,7 +228,6 @@ function addAddress($user_id) {
     }
 }
 
-
 function editAddress($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "PATCH") { 
         $data = json_decode(file_get_contents("php://input"), true);
@@ -258,7 +257,7 @@ function editAddress($user_id) {
 
             $result = editAddressInDatabase($user_id, $address_id, $street, $city, $state, $zip_code, $name, $number, $country);
 
-            return createResponse($result['response'], $result['status']);
+            return $result;
         } else {
             return createResponse("O ID do endereço é obrigatório.", 400);
         }

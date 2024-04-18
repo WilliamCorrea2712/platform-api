@@ -201,7 +201,9 @@ function isValidTypePerson($type_person) {
 function cpfExists($cpf, $customer_id = null) {
     global $conn;
 
-    $sql = "SELECT COUNT(*) as count FROM " . PREFIX . "customers WHERE cnpj_cpf = ?";
+    $cpf = preg_replace('/[^0-9]/', '', $cpf);
+
+    $sql = "SELECT COUNT(*) as count FROM " . PREFIX . "customers WHERE REPLACE(cnpj_cpf, '.', '') = ?";
 
     if ($customer_id !== null) {
         $sql .= " AND id <> ?";
