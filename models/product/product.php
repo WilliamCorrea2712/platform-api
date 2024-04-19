@@ -39,7 +39,8 @@ function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $c
 function getAllProducts($product_id = null) {
     global $conn;
 
-    $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, pd.meta_description, pd.meta_keyword
+    $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, 
+    pd.meta_description, pd.meta_keyword, pd.description_resume, pd.tags
             FROM " . PREFIX . "product p
             LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id";
 
@@ -116,9 +117,11 @@ function getAllProducts($product_id = null) {
             'updated_at' => $row['updated_at'],
             'name' => $row['product_name'],
             'description' => $row['product_description'],
+            'description_resume' => $row['description_resume'],
             'meta_title' => $row['meta_title'],
             'meta_description' => $row['meta_description'],
             'meta_keyword' => $row['meta_keyword'],
+            'tags' => $row['tags'],
             'images' => $images,
             'stock' => $stock,
         );
