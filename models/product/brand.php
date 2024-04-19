@@ -63,8 +63,9 @@ function getAllBrands($brand_id = null) {
     while ($row = $result->fetch_assoc()) {
         $brand_id = $row['brand_id'];
 
-        $brands[$brand_id] = array(
-            'brand_id' => $brand_id,
+        $brands[] = array(
+            'id' => $brand_id,
+            'name' => $row['name'],
             'image' => $row['image'],
             'sort_order' => $row['sort_order'],
             'status' => $row['status'],
@@ -80,7 +81,7 @@ function getAllBrands($brand_id = null) {
     $stmt->close();
     $conn->close();
 
-    return createResponse(array_values($brands), 200);
+    return $brands;
 }
 
 function editbrandInDatabase($user_id, $brand_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {

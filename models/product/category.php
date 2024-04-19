@@ -63,8 +63,9 @@ function getAllCategories($category_id = null) {
     while ($row = $result->fetch_assoc()) {
         $category_id = $row['category_id'];
 
-        $categories[$category_id] = array(
-            'category_id' => $category_id,
+        $categories[] = array(
+            'id' => $category_id,
+            'name' => $row['name'],
             'image' => $row['image'],
             'parent_id' => $row['parent_id'],
             'sort_order' => $row['sort_order'],
@@ -81,7 +82,7 @@ function getAllCategories($category_id = null) {
     $stmt->close();
     $conn->close();
 
-    return createResponse(array_values($categories), 200);
+    return $categories;
 }
 
 function editCategoryInDatabase($user_id, $category_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {

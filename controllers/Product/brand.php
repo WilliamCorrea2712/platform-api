@@ -31,12 +31,12 @@ function addBrand($user_id) {
 }
 
 function getBrands($brand_id = null) {
-    $result = getAllBrands($brand_id);
+    $brands = getAllBrands($brand_id);
 
-    if (!empty($result)) {
-        return createResponse($result, 200);
+    if (!empty($brands)) {
+        return createResponse(array('brands' => $brands), 200); 
     } else {
-        return createResponse("Nenhuma marca encontrada.", 404);
+        return createResponse(array('error' => "Nenhuma marca encontrada."), 404);
     }
 }
 

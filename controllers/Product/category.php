@@ -32,12 +32,12 @@ function addCategory($user_id) {
 }
 
 function getCategories($category_id = null) {
-    $result = getAllCategories($category_id);
+    $categories = getAllCategories($category_id);
 
-    if (!empty($result)) {
-        return createResponse($result, 200);
+    if (!empty($categories)) {
+        return createResponse(array('categories' => $categories), 200); 
     } else {
-        return createResponse("Nenhuma categoria encontrada.", 404);
+        return createResponse(array('error' => "Nenhum usuário encontrado."), 404);
     }
 }
 
