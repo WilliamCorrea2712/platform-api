@@ -46,10 +46,12 @@ function addProduct($user_id) {
 }
 
 function getProducts($product_id = null) {
-    $result = getAllProducts($product_id);
+    $products = getAllProducts($product_id);
 
-    if (!empty($result)) {
-        return createResponse($result, 200);
+    if (!empty($products)) {
+        return createResponse(array('products' => $products), 200); 
+    } else {
+        return createResponse(array('error' => "Nenhum produto encontrado."), 404);
     }
 }
 

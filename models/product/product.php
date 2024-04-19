@@ -123,7 +123,7 @@ function getAllProducts($product_id = null) {
             'stock' => $stock,
         );
     }
-    return createResponse($products, 200);
+    return $products;
 }
 
 function editProductInDatabase($user_id, $product_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume) {
