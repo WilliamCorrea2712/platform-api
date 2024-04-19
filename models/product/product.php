@@ -98,8 +98,8 @@ function getAllProducts($product_id = null) {
         }
         $stmt_stock->close();
 
-        $products[$product_id] = array(
-            'product_id' => $product_id,
+        $products[] = array(
+            'id' => $product_id,
             'brand_id' => $row['brand_id'],
             'categories' => json_decode($row['categories']),
             'price' => $row['price'],
