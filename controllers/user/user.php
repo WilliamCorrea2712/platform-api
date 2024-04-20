@@ -85,9 +85,9 @@ function deleteUser($user_id){
         if (isset($data['user_id'])) {
             $id = $data['user_id'];
 
-            if ((int)$id != $user_id) {
+            /*if ((int)$id != $user_id) {
                 return createResponse("Você não tem permissão para excluir este usuário.", 401);
-            }
+            }*/
 
             $result = delUser($id);
 
