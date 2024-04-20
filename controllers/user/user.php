@@ -82,8 +82,8 @@ function deleteUser($user_id){
     if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
         $data = json_decode(file_get_contents("php://input"), true);
         
-        if (isset($data['id'])) {
-            $id = $data['id'];
+        if (isset($data['user_id'])) {
+            $id = $data['user_id'];
 
             if ((int)$id != $user_id) {
                 return createResponse("Você não tem permissão para excluir este usuário.", 401);
