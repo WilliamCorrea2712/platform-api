@@ -67,12 +67,12 @@ function deleteStockOptions($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!isset($data['product_id']) || !isset($data['id']) || !isset($data['attribute_id'])) {
+        if (!isset($data['product_id']) || !isset($data['stock_id']) || !isset($data['attribute_id'])) {
             return createResponse("Os campos 'product_id', 'id' e 'attribute_id' são obrigatórios para excluir uma opção de estoque.", 400);
         }
 
         $product_id = $data['product_id'];
-        $id = $data['id'];
+        $id = $data['stock_id'];
         $attribute_id = $data['attribute_id'];
 
         $model = new ProductStockModel();

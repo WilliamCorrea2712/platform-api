@@ -95,6 +95,7 @@ function getAllProducts($product_id = null) {
         $stock = array();
         while ($row_stock = $result_stock->fetch_assoc()) {
             $stock[] = array(
+                'stock_id' => $row_stock['id'],
                 'name' => $row_stock['name'],
                 'value' => $row_stock['value'],
                 'attribute_id' => $row_stock['attribute_id'],
