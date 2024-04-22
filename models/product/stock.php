@@ -279,7 +279,7 @@ class ProductStockModel {
     public function getStockOptions($product_id) {
         global $conn;
     
-        $sql = "SELECT pav.id, pav.attribute_id, pav.quantity, pav.parent_attribute_id, ap.product_id, apd.name 
+        $sql = "SELECT pav.id, pav.attribute_id, pav.quantity, pav.parent_attribute_id, ap.product_id, apd.name, pav.stock_cart
         FROM " . PREFIX . "product_attribute_value pav
         INNER JOIN " . PREFIX . "product ap ON pav.product_id = ap.product_id
         INNER JOIN " . PREFIX . "product_description apd ON ap.product_id = apd.product_id";
@@ -312,7 +312,8 @@ class ProductStockModel {
                 'id' => $row['id'],
                 'attribute_id' => $row['attribute_id'],
                 'quantity' => $row['quantity'],
-                'parent_attribute_id' => $row['parent_attribute_id']
+                'parent_attribute_id' => $row['parent_attribute_id'],
+                'stock_cart' => $row['stock_cart'],
             );
     
             $options[$row['product_id']]['options'][] = $option;

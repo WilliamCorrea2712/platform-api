@@ -84,7 +84,9 @@ function getAllProducts($product_id = null) {
         }
         $stmt_images->close();
 
-        $sql_stock = "SELECT * FROM " . PREFIX . "product_attribute_value WHERE product_id = ?";
+        $sql_stock = "SELECT pav.*, pa.name FROM " . PREFIX . "product_attribute_value pav ";
+        $sql_stock .= "INNER JOIN " . PREFIX . "product_attribute pa ON pav.attribute_id = pa.id";
+        $sql_stock .= " WHERE pav.product_id = ?";
         $stmt_stock = $conn->prepare($sql_stock);
         $stmt_stock->bind_param("i", $product_id);
         $stmt_stock->execute();
@@ -93,8 +95,14 @@ function getAllProducts($product_id = null) {
         $stock = array();
         while ($row_stock = $result_stock->fetch_assoc()) {
             $stock[] = array(
+                'name' => $row_stock['name'],
                 'value' => $row_stock['value'],
-                'quantity' => $row_stock['quantity']
+                'attribute_id' => $row_stock['attribute_id'],
+                'parent_attribute_id' => $row_stock['parent_attribute_id'],
+                'quantity' => $row_stock['quantity'],
+                'stock_cart' => $row_stock['stock_cart']?$row_stock['stock_cart']:0,
+                'operation_type' => $row_stock['operation_type'],
+                'additional_value' => $row_stock['additional_value']
             );
         }
         $stmt_stock->close();
