@@ -167,7 +167,7 @@ function addProductImages($user_id) {
         }
 
         if (getProductImages($product_id) >= $max_images) {
-            $errors[] = "Número máximo de imagens por produto estourado: {$max_images}.";
+            $errors[] = "Numero maximo de imagens por produto estourado: {$max_images} imagens.";
             break;
         }
 
