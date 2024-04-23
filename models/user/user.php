@@ -33,13 +33,15 @@ function addUserWithToken($name, $password, $email) {
 function getAllUsers($id = null) {
     global $conn;
 
-    $sql = "SELECT id, name, email, password FROM " . PREFIX . "user";
+    $sql = "SELECT u.id, u.name, u.email, u.password, t.token
+        FROM " . PREFIX . "user AS u
+        INNER JOIN " . PREFIX . "tokens AS t ON u.id = t.user_id";
 
     if ($id !== null) {
-        $sql .= " WHERE id = ?";
+        $sql .= " WHERE u.id = ?";
     }
 
-    $sql .= " ORDER BY name";
+    $sql .= " ORDER BY u.name";
 
     $stmt = $conn->prepare($sql);
 
@@ -58,6 +60,7 @@ function getAllUsers($id = null) {
                 'id' => $row['id'],
                 'name' => $row['name'],
                 'email' => $row['email'],
+                'token' => $row['token'],
             );
         }
 
