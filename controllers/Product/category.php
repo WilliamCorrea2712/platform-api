@@ -68,7 +68,7 @@ function editCategory($user_id) {
 
             $result = editCategoryInDatabase($user_id, $category_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status);
 
-            return createResponse($result['response'], $result['status']);
+            return $result;
         } else {
             return createResponse("O ID da categoria é obrigatório.", 400);
         }
