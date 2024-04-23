@@ -87,12 +87,11 @@ class ProductAttributeController {
         if (empty($options)) {
             return createResponse("Nenhuma opção de estoque foi fornecida.", 400);
         }
-    
         $firstQuantity = $options[0]['quantity'];
         $otherQuantities = array_column(array_slice($options, 1), 'quantity');
         $totalQuantity = array_sum($otherQuantities);
     
-        if ($firstQuantity !== $totalQuantity) {
+        if ((int)$firstQuantity !== (int)$totalQuantity) {
             return createResponse("A quantidade do tipo não é igual à soma das quantidades dos atributos.", 400);
         }
     
