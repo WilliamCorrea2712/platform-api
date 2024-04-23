@@ -128,66 +128,69 @@ function deleteProduct($user_id) {
 }
 
 function addProductImages($user_id) {
-    if ($_SERVER["REQUEST_METHOD"] == "POST") { 
-        if (isset($_POST['product_id'])) {
-            $product_id = $_POST['product_id'];
+    $json_data = file_get_contents('php://input');
+    $request_data = json_decode($json_data, true);
 
-            if (!itemExists("product", "product_id", $product_id)) {
-                return createResponse("O produto não foi encontrado.", 404);
-            }
-
-            if (empty($_FILES['images'])) {
-                return createResponse("Nenhuma imagem foi enviada.", 400);
-            }
-
-            $upload_dir = __DIR__ . "/../../public/images/";
-            $errors = array();
-            $max_images = 5;
-
-            foreach ($_FILES['images']['name'] as $key => $image_name) {
-                $image_tmp_name = $_FILES['images']['tmp_name'][$key];
-                $image_type = $_FILES['images']['type'][$key];
-                $image_error = $_FILES['images']['error'][$key];
-                $image_size = $_FILES['images']['size'][$key];
-
-                if ($image_error !== UPLOAD_ERR_OK) {
-                    $errors[] = "Erro ao fazer upload da imagem '{$image_name}'. Código de erro: {$image_error}.";
-                    continue;
-                }
-
-                if (!is_valid_image($image_tmp_name, $image_type)) {
-                    $errors[] = "Tipo de arquivo inválido: '{$image_type}'.";
-                    continue;
-                }
-
-                if (getProductImages($product_id) >= $max_images) {
-                    $errors[] = "Número máximo de imagens por produto estourado: {$max_images}.";
-                    break;
-                }
-
-                $image_extension = pathinfo($image_name, PATHINFO_EXTENSION);
-                $image_unique_name = $product_id . "_" . uniqid() . "." . $image_extension;
-
-                if (!move_uploaded_file($image_tmp_name, $upload_dir . $image_unique_name)) {
-                    $errors[] = "Erro ao mover a imagem '{$image_name}' para o diretório de destino.";
-                    continue;
-                }
-
-                $image_url = 'public/images/' . $image_unique_name;
-                saveImageToDatabase($user_id, $product_id, $image_unique_name, $image_url, pathinfo($image_name, PATHINFO_FILENAME));
-            }
-
-            if (!empty($errors)) {
-                return createResponse($errors, 500);
-            }
-
-            return createResponse("Imagens adicionadas com sucesso!", 200);
-        } else {
-            return createResponse("O campo 'product_id' é obrigatório.", 400);
-        }
-    } else {
-        return createResponse("Método não permitido.", 405);
+    if ($request_data === null) {
+        return createResponse("Erro ao decodificar o JSON.", 400);
     }
+
+    if (!isset($request_data['product_id'])) {
+        return createResponse("O campo 'product_id' é obrigatório.", 400);
+    }
+
+    $product_id = $request_data['product_id'];
+
+    if (!itemExists("product", "product_id", $product_id)) {
+        return createResponse("O produto não foi encontrado.", 404);
+    }
+
+    if (empty($request_data['images'])) {
+        return createResponse("Nenhuma imagem foi enviada.", 400);
+    }
+
+    $upload_dir = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "images" . DIRECTORY_SEPARATOR;
+
+    $errors = array();
+    $max_images = 5;
+
+    foreach ($request_data['images'] as $image_data) {
+        $image_name = $image_data['name'];
+        $image_tmp_name = $image_data['tmp_name'];
+        $image_type = $image_data['type'];
+        $image_error = $image_data['error'];
+        $image_size = $image_data['size'];
+
+        if ($image_error !== UPLOAD_ERR_OK) {
+            $errors[] = "Erro ao fazer upload da imagem '{$image_name}'. Código de erro: {$image_error}.";
+            continue;
+        }
+
+        if (getProductImages($product_id) >= $max_images) {
+            $errors[] = "Número máximo de imagens por produto estourado: {$max_images}.";
+            break;
+        }
+
+        $image_extension = pathinfo($image_name, PATHINFO_EXTENSION);
+        $image_unique_name = $product_id . "_" . uniqid() . "." . $image_extension;
+
+        $destination = $upload_dir . $image_unique_name;
+
+        if (!copy($image_tmp_name, $destination)) {
+            $errors[] = "Erro ao copiar a imagem '{$image_name}' para o diretório de destino.";
+            continue;
+        }
+        unlink($image_tmp_name);
+
+        $image_url = 'public/images/' . $image_unique_name;
+        saveImageToDatabase($user_id, $product_id, $image_unique_name, $image_url, pathinfo($image_name, PATHINFO_FILENAME));
+    }
+
+    if (!empty($errors)) {
+        return createResponse($errors, 500);
+    }
+
+    return createResponse("Imagens adicionadas com sucesso!", 200);
 }
 
 function deleteProductImages($user_id) {
