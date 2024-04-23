@@ -153,6 +153,8 @@ function addProductImages($user_id) {
 
     $errors = array();
     $max_images = 5;
+    $qtdImagesRequest = count($request_data['images']);
+    $qtdImage = getProductImages($product_id) + $qtdImagesRequest;
 
     foreach ($request_data['images'] as $image_data) {
         $image_name = $image_data['name'];
@@ -166,9 +168,9 @@ function addProductImages($user_id) {
             continue;
         }
 
-        if (getProductImages($product_id) >= $max_images) {
+       if ($qtdImage > $max_images) {
             $errors[] = "Numero maximo de imagens por produto estourado: {$max_images} imagens.";
-            break;
+            continue;
         }
 
         $image_extension = pathinfo($image_name, PATHINFO_EXTENSION);
@@ -181,7 +183,7 @@ function addProductImages($user_id) {
             continue;
         }
         unlink($image_tmp_name);
-
+        
         $image_url = 'public/images/' . $image_unique_name;
         saveImageToDatabase($user_id, $product_id, $image_unique_name, $image_url, pathinfo($image_name, PATHINFO_FILENAME));
     }
