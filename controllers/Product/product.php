@@ -32,11 +32,9 @@ function addProduct($user_id) {
             $meta_keyword = isset($data['meta_keyword']) ? $data['meta_keyword'] : '';
             $description_resume = isset($data['description_resume']) ? $data['description_resume'] : '';
 
-            $product_id = addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
+            $result = addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
 
-            if (is_numeric($product_id)) {
-                return createResponse("Produto adicionado com sucesso.", 201);
-            }
+            return $result;
         } else {
             return createResponse("Os campos 'name', 'description', 'price' e 'weight' são obrigatórios.", 400);
         }

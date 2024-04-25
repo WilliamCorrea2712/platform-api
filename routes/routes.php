@@ -36,9 +36,12 @@ date_default_timezone_set('America/Sao_Paulo');
         PRODUCT . "editStockOptions" => "editStockOptions",
         PRODUCT . "deleteStockOptions" => "deleteStockOptions",
         PRODUCT . "getStockOptions" => "getStockOptions",
+
+        PRODUCT . "addProductList" => "addProductList",
+
         CHECKOUT. "addCart" => "ShoppingCart::addCart", 
         CHECKOUT. "clearSession" => "ShoppingCart::clearSession", 
-        CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",
+        CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",        
     );
 
     if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -56,6 +59,7 @@ date_default_timezone_set('America/Sao_Paulo');
             require_once __DIR__ . "/../controllers/product/category.php";
             require_once __DIR__ . "/../controllers/product/brand.php";
             require_once __DIR__ . "/../controllers/product/stock.php";
+            require_once __DIR__ . "/../controllers/product/listProducts.php";
         } else if (strpos($route, "checkout/") === 0) {
             require_once __DIR__ . "/../checkout/cart.php";
         }

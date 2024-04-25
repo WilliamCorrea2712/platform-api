@@ -2,13 +2,15 @@
 require_once __DIR__ . '/../mysql/conn.php';
 require_once __DIR__ . '/../config.php';
 
-function createResponse($message, $status) {
+function createResponse($message, $status, $data = null) {
     http_response_code($status);
-    if ($status >= 200 && $status < 400) {
-        echo json_encode(array("message" => $message), JSON_UNESCAPED_UNICODE);
-    } else {
-        echo json_encode(array("error" => $message), JSON_UNESCAPED_UNICODE);
+    $responseData = ['message' => $message];
+    
+    if ($data !== null) {
+        $responseData = array_merge($responseData, $data);
     }
+
+    echo json_encode($responseData, JSON_UNESCAPED_UNICODE);
 }
 
 /*function createResponse($message, $status) {
@@ -73,11 +75,16 @@ function userEmailExists($email) {
     return $exists;
 }
 
+function listProductsExists($name) {
+    $exists = existsInTable('product_lists', 'name', $name);
+    return $exists;
+}
+
 function itemExists($table, $id_column, $item_id) {
     global $conn;
-
+    
     $sql = "SELECT COUNT(*) AS count FROM " . PREFIX . $table . " WHERE " . $id_column . " = ?";
-
+    
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $item_id);
     $stmt->execute();

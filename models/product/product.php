@@ -28,7 +28,7 @@ function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $c
         $stmt->close();
         $stmt_description->close();
         $conn->close();
-        return createResponse("Produto adicionado com sucesso.", 201);
+        return createResponse("Produto adicionado com sucesso.", 201, ['product_id' => $product_id]);
     } else {
         $stmt->close();
         $conn->close();
