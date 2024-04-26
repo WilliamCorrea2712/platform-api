@@ -1,9 +1,11 @@
 <?php
+session_start();
+
 require_once __DIR__ . "/../security/token.php"; 
 require_once(__DIR__ . '/../config.php');
 require_once __DIR__ . "/../global/helpers.php";
-
-date_default_timezone_set('America/Sao_Paulo');
+require_once __DIR__ . '/../rate_limit.php';
+require_once __DIR__ . '/../bootstrap.php';
 
     $routes = array(
         USER . "addUser" => "addUser",

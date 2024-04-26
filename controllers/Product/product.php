@@ -12,11 +12,13 @@ function addProduct($user_id) {
             isset($data['price']) &&
             isset($data['weight'])
         ) {
+            $name = isset($data['name']) ? $data['name'] : null;
+            $description = isset($data['description']) ? $data['description'] : null;
+            $price = isset($data['price']) ? $data['price'] : null;
+            $weight = isset($data['weight']) ? $data['weight'] : null;
             $brand_id = isset($data['brand_id']) ? $data['brand_id'] : null;
             $categories = isset($data['categories']) ? json_encode($data['categories']) : null;
-            $price = $data['price'];
             $cost_price = isset($data['cost_price']) ? $data['cost_price'] : null;
-            $weight = $data['weight'];
             $length = isset($data['length']) ? $data['length'] : null;
             $width = isset($data['width']) ? $data['width'] : null;
             $height = isset($data['height']) ? $data['height'] : null;
@@ -24,8 +26,6 @@ function addProduct($user_id) {
             $sort_order = isset($data['sort_order']) ? $data['sort_order'] : null;
             $minimum = isset($data['minimum']) ? $data['minimum'] : null;
             $status = isset($data['status']) ? $data['status'] : null;
-            $name = $data['name'];
-            $description = $data['description'];
             $tags = isset($data['tags']) ? $data['tags'] : '';
             $meta_title = isset($data['meta_title']) ? $data['meta_title'] : '';
             $meta_description = isset($data['meta_description']) ? $data['meta_description'] : '';
