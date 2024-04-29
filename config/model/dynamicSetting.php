@@ -20,7 +20,7 @@ function addSettingToDatabase($user_id, $name, $value, $group_name) {
 function getAllSettingFromDatabase($id, $name, $group_name) {
     global $conn;
 
-    $sql = "SELECT id, name, group_name FROM api_dynamic_setting WHERE 1 = 1";
+    $sql = "SELECT id, name, value, group_name FROM api_dynamic_setting WHERE 1 = 1";
 
     if ($id !== null) {
         $sql .= " AND id = ?";
