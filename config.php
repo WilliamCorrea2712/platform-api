@@ -4,3 +4,4 @@
     define("ACCOUNT", "account/");
     define("USER", "user/");
     define("CHECKOUT", "checkout/");
+    define("CONFIG", "config/");

@@ -43,7 +43,10 @@ require_once __DIR__ . '/../bootstrap.php';
         PRODUCT . "getAllProductLists" => "getAllProductLists",                
         CHECKOUT. "addCart" => "ShoppingCart::addCart", 
         CHECKOUT. "clearSession" => "ShoppingCart::clearSession", 
-        CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",        
+        CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",         
+        CONFIG. "addDynamicSetting" => "addDynamicSetting",
+        CONFIG. "deleteDynamicSetting" => "deleteDynamicSetting",
+        CONFIG. "getDynamicSetting" => "getDynamicSetting",
     );
 
     if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -62,6 +65,8 @@ require_once __DIR__ . '/../bootstrap.php';
             require_once __DIR__ . "/../controllers/product/brand.php";
             require_once __DIR__ . "/../controllers/product/stock.php";
             require_once __DIR__ . "/../controllers/product/listProducts.php";
+        } else if (strpos($route, "config/") === 0) {
+            require_once __DIR__ . "/../config/controller/dynamicSetting.php";
         } else if (strpos($route, "checkout/") === 0) {
             require_once __DIR__ . "/../checkout/cart.php";
         }
@@ -80,6 +85,26 @@ require_once __DIR__ . '/../bootstrap.php';
             } else{
                 $handler();
             }
+        } else if(strpos($route, "config/getDynamicSetting") !== false){                    
+            if (isset($_GET['id'])) {
+                $id = $_GET['id'];
+            } else {
+                $id = null;
+            }
+            
+            if (isset($_GET['name'])) {
+                $name = $_GET['name'];
+            } else {
+                $name = null;
+            }
+            
+            if (isset($_GET['group_name'])) {
+                $group_name = $_GET['group_name'];
+            } else {
+                $group_name = null;
+            }
+
+            $handler($id, $name, $group_name);
         } else if(strpos($route, "checkout/getProductsCart") !== false || strpos($route, "checkout/clearSession") !== false){
             if (isset($_GET['session_id'])){
                 $handler($user_id, $_GET['session_id']);
