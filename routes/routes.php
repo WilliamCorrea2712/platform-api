@@ -91,17 +91,22 @@ require_once __DIR__ . '/../bootstrap.php';
             } else {
                 $id = null;
             }            
+            if (isset($_GET['key'])) {
+                $key = $_GET['key'];
+            } else {
+                $key = null;
+            }      
             if (isset($_GET['name'])) {
                 $name = $_GET['name'];
             } else {
                 $name = null;
-            }            
+            }        
             if (isset($_GET['group_name'])) {
                 $group_name = $_GET['group_name'];
             } else {
                 $group_name = null;
             }
-            $handler($id, $name, $group_name);
+            $handler($id, $key, $name, $group_name);
         } else if(strpos($route, "checkout/getProductsCart") !== false || strpos($route, "checkout/clearSession") !== false){
             if (isset($_GET['session_id'])){
                 $handler($user_id, $_GET['session_id']);
