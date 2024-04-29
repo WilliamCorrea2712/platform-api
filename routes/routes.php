@@ -90,20 +90,17 @@ require_once __DIR__ . '/../bootstrap.php';
                 $id = $_GET['id'];
             } else {
                 $id = null;
-            }
-            
+            }            
             if (isset($_GET['name'])) {
                 $name = $_GET['name'];
             } else {
                 $name = null;
-            }
-            
+            }            
             if (isset($_GET['group_name'])) {
                 $group_name = $_GET['group_name'];
             } else {
                 $group_name = null;
             }
-
             $handler($id, $name, $group_name);
         } else if(strpos($route, "checkout/getProductsCart") !== false || strpos($route, "checkout/clearSession") !== false){
             if (isset($_GET['session_id'])){

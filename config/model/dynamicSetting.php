@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../../mysql/conn.php';
 require_once __DIR__ . '/../../global/logs.php';
 require_once(__DIR__ . '/../../config.php');
-
 function addSettingToDatabase($user_id, $name, $value, $group_name) {
     global $conn;
 

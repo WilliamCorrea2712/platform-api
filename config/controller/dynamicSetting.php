@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . "/../../config/model/dynamicSetting.php";
-
 function addDynamicSetting($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $data = json_decode(file_get_contents("php://input"), true);
