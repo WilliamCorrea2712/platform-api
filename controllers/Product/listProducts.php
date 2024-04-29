@@ -31,8 +31,8 @@ function addProductList($user_id) {
     }
 }
 
-function getAllProductLists() {
-    $product_lists = getAllProductListsFromDatabase();
+function getAllProductLists($id = null) {
+    $product_lists = getAllProductListsFromDatabase($id);
 
     if (!empty($product_lists)) {
         return createResponse(array('product_lists' => $product_lists), 200); 
@@ -41,42 +41,54 @@ function getAllProductLists() {
     }
 }
 
-function getProductList($product_list_id) {
-    $product_list = getProductListFromDatabase($product_list_id);
-
-    if (!empty($product_list)) {
-        return createResponse(array('product_list' => $product_list), 200); 
-    } else {
-        return createResponse(array('error' => "Lista de produtos não encontrada."), 404);
-    }
-}
-
-function editProductList($user_id, $product_list_id) {
+function editProductList($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "PATCH") { 
         $data = json_decode(file_get_contents("php://input"), true);
+        
+        if (isset($data['list_id'])) {
+            $list_id = $data['list_id'];
+            
+            if (!itemExists("product_lists", "id", $list_id)) {
+                return createResponse("Lista não encontrada.", 404);
+            }
 
-        if ($data !== null) {
+            if (count($data) <= 1) {
+                return createResponse("Nenhum dado a ser alterado foi fornecido.", 400);
+            }
+
             $name = isset($data['name']) ? $data['name'] : null;
             $products = isset($data['products']) ? json_encode($data['products']) : null;
             $sort_order = isset($data['sort_order']) ? $data['sort_order'] : null;
-            $status = isset($data['status']) ? $data['status'] : null;
+            $status = isset($data['status']) ? $data['status'] : null;  
 
-            $result = editProductListInDatabase($user_id, $product_list_id, $name, $products, $sort_order, $status);
+            $result = editProductListInDatabase($user_id, $list_id, $name, $products, $sort_order, $status);
 
-            return createResponse($result['response'], $result['status']);
+            return $result;
         } else {
-            return createResponse("Nenhum dado fornecido para atualização.", 400);
+            return createResponse("O ID da lista é obrigatório.", 400);
         }
     } else {
         return createResponse("Método não permitido.", 405);
     }
 }
 
-function deleteProductList($user_id, $product_list_id) {
+function deleteProductList($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "DELETE") { 
-        $result = deleteProductListFromDatabase($user_id, $product_list_id);
+        $data = json_decode(file_get_contents("php://input"), true);
         
-        return createResponse($result['response'], $result['status']);
+        if (isset($data['list_id'])) {
+            $list_id = $data['list_id'];
+
+            if (!listExists($list_id)) {
+                return createResponse("Lista não encontrada.", 404);
+            }
+
+            $result = deleteProductListFromDatabase($user_id, $list_id);
+
+            return $result;
+        } else {
+            return createResponse("ID da lista não fornecido.", 400);
+        }
     } else {
         return createResponse("Método não permitido.", 405);
     }

@@ -80,6 +80,11 @@ function listProductsExists($name) {
     return $exists;
 }
 
+function listExists($list_id) {
+    $exists = existsInTable('product_lists', 'id', $list_id);
+    return $exists;
+}
+
 function itemExists($table, $id_column, $item_id) {
     global $conn;
     

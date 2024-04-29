@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 require_once __DIR__ . "/../security/token.php"; 
 require_once(__DIR__ . '/../config.php');
 require_once __DIR__ . "/../global/helpers.php";
@@ -38,9 +37,10 @@ require_once __DIR__ . '/../bootstrap.php';
         PRODUCT . "editStockOptions" => "editStockOptions",
         PRODUCT . "deleteStockOptions" => "deleteStockOptions",
         PRODUCT . "getStockOptions" => "getStockOptions",
-
         PRODUCT . "addProductList" => "addProductList",
-
+        PRODUCT . "editProductList" => "editProductList",
+        PRODUCT . "deleteProductList" => "deleteProductList",
+        PRODUCT . "getAllProductLists" => "getAllProductLists",                
         CHECKOUT. "addCart" => "ShoppingCart::addCart", 
         CHECKOUT. "clearSession" => "ShoppingCart::clearSession", 
         CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",        
@@ -72,8 +72,9 @@ require_once __DIR__ . '/../bootstrap.php';
                 strpos($route, "product/getCategories") !== false || 
                 strpos($route, "product/getBrands") !== false ||
                 strpos($route, "product/getProducts") !== false ||
+                strpos($route, "product/getAllProductLists") !== false ||
                 strpos($route, "user/getUsers") !== false){
-
+                    
             if (isset($_GET['id'])){
                 $handler($_GET['id']);
             } else{
