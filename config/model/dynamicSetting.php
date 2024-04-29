@@ -34,6 +34,8 @@ function getAllSettingFromDatabase($id, $name, $group_name) {
         $sql .= " AND group_name = ?";
     }
 
+    $sql .= " ORDER BY group_name";
+
     $stmt = $conn->prepare($sql);
 
     if ($id !== null && $name !== null && $group_name !== null) {
