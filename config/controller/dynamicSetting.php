@@ -40,6 +40,29 @@ function getDynamicSetting($id, $key, $name, $group_name) {
     }
 }
 
+function editDynamicSetting($user_id) {
+    if ($_SERVER["REQUEST_METHOD"] == "PATCH") { 
+        $data = json_decode(file_get_contents("php://input"), true);
+        
+        if (isset($data['setting_id']) && isset($data['value'])) {
+            $setting_id = $data['setting_id'];
+            $value = $data['value'];
+
+            if (!settingExistsById($setting_id)) {
+                return createResponse("Configuração não encontrada.", 404);
+            }
+
+            $result = updateSettingInDatabase($user_id, $setting_id, $value);
+
+            return $result;
+        } else {
+            return createResponse("Parâmetros inválidos para edição da configuração.", 400);
+        }
+    } else {
+        return createResponse("Método não permitido.", 405);
+    }
+}
+
 function deleteDynamicSetting($user_id) {
     if ($_SERVER["REQUEST_METHOD"] == "DELETE") { 
         $data = json_decode(file_get_contents("php://input"), true);

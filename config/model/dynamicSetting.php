@@ -80,17 +80,33 @@ function getAllSettingFromDatabase($id, $key, $name, $group_name) {
     return $settings;
 }
 
+function updateSettingInDatabase($user_id, $setting_id, $value){
+    global $conn;
+
+    $sql = "UPDATE " . PREFIX . "dynamic_setting SET value = ? WHERE id = ? ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("si", $value, $setting_id);
+
+    if ($stmt->execute()) {
+        return createResponse("Configuração alterada com sucesso.", 200);
+    } else {
+        return createResponse("Erro ao editar configuração: " . $stmt->error, 500);
+    }
+}
+
 function deleteSettingFromDatabase($user_id, $setting_id = null, $key = null, $group_name = null) {
     global $conn;
 
     if ($setting_id !== null) {
-        $sql = "DELETE FROM " . PREFIX . "dynamic_setting WHERE id = ? AND created_by_user_id = ?";
+        $sql = "DELETE FROM " . PREFIX . "dynamic_setting WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ii", $setting_id, $user_id);
+        $stmt->bind_param("i", $setting_id);
+        insertLog($user_id, "setting_id=$setting_id", "deleted");
     } else {
-        $sql = "DELETE FROM " . PREFIX . "dynamic_setting WHERE key = ? AND group_name = ? AND created_by_user_id = ?";
+        $sql = "DELETE FROM " . PREFIX . "dynamic_setting WHERE `key` = ? AND group_name = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssi", $key, $group_name, $user_id);
+        $stmt->bind_param("ss", $key, $group_name);
+        insertLog($user_id, "setting_id-key-groupName=$key+$group_name", "deleted");
     }
 
     if ($stmt->execute()) {
@@ -133,7 +149,7 @@ function settingExistsById($setting_id) {
 function settingExistsByNameAndGroup($key, $group_name) {
     global $conn;
 
-    $sql = "SELECT id FROM " . PREFIX . "dynamic_setting WHERE key = ? AND group_name = ?";
+    $sql = "SELECT id FROM " . PREFIX . "dynamic_setting WHERE `key` = ? AND group_name = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $key, $group_name);
     $stmt->execute();

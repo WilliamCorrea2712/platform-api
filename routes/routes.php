@@ -45,7 +45,8 @@ require_once __DIR__ . '/../bootstrap.php';
         CHECKOUT. "clearSession" => "ShoppingCart::clearSession", 
         CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",         
         CONFIG. "addDynamicSetting" => "addDynamicSetting",
-        CONFIG. "deleteDynamicSetting" => "deleteDynamicSetting",
+        CONFIG. "editDynamicSetting" => "editDynamicSetting",
+        CONFIG. "deleteDynamicSetting" => "deleteDynamicSetting",        
         CONFIG. "getDynamicSetting" => "getDynamicSetting",
     );
 
