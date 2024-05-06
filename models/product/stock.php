@@ -139,10 +139,6 @@ class ProductStockModel {
             return createResponse("Opção de estoque não encontrada para o produto especificado.", 404);
         }
     
-        if (!is_int($quantity) || $quantity <= 0) {
-            return createResponse("A quantidade fornecida deve ser um número inteiro positivo.", 400);
-        }
-    
         $current_quantity_data = $this->getCurrentQuantity($product_id, $id, $attribute_id);
     
         if ($current_quantity_data['parent_attribute_id'] === null) {
