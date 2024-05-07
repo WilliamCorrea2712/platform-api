@@ -36,7 +36,7 @@ function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $c
     }
 }
 
-function getAllProducts($product_id = null) {
+function getAllProducts($product_id) {
     global $conn;
 
     $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, 
@@ -45,14 +45,19 @@ function getAllProducts($product_id = null) {
             LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id";
 
     if ($product_id !== null) {
-        $sql .= " WHERE p.product_id = ?";
+        if (is_array($product_id)) {
+            $product_id = str_replace(['"', '[', ']', ' '], '', $product_id);
+            $product_ids_sql = implode(',', $product_id);
+            $sql .= " WHERE p.product_id IN ($product_ids_sql)";
+        } else {
+            $product_id = str_replace(['[', ']', '"'], '', $product_id);
+            $product_ids_array = explode(',', $product_id);
+            $product_ids_sql = "'" . implode("','", $product_ids_array) . "'";
+            $sql .= " WHERE p.product_id IN(" . $product_ids_sql . ")";
+        }
     }
 
     $stmt = $conn->prepare($sql);
-
-    if ($product_id !== null) {
-        $stmt->bind_param("i", $product_id);
-    }
 
     if (!$stmt->execute()) {
         return createResponse("Erro ao buscar produtos: " . $conn->error, 500);
@@ -135,6 +140,7 @@ function getAllProducts($product_id = null) {
             'stock' => $stock,
         );
     }
+
     return $products;
 }
 
