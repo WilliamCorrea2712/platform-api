@@ -19,9 +19,9 @@ function addBrand($user_id) {
             $sort_order = isset($data['sort_order']) ? $data['sort_order'] : null;
             $status = isset($data['status']) ? $data['status'] : null;
 
-            addBrandToDatabase($user_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status);
+            $result = addBrandToDatabase($user_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status);
 
-            return createResponse("Marca adicionada com sucesso.", 201);
+            return $result;
         } else {
             return createResponse("Os campos 'name' e 'description' são obrigatórios.", 400);
         }

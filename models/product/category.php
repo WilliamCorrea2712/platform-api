@@ -7,6 +7,13 @@ require_once(__DIR__ . '/../../config.php');
 function addCategoryToDatabase($user_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
     global $conn;
 
+    $apiUrlModel = new ApiUrlModel();
+    $urlCreationResult = $apiUrlModel->valid($name);
+
+    if ($urlCreationResult) {
+        return createResponse("Url Amigável já existe, altere o nome!", 500);
+    }
+
     $sql = "INSERT INTO " . PREFIX . "category (image, parent_id, sort_order, status, created_by_user_id) VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("siisi", $image, $parent_id, $sort_order, $status, $user_id);
@@ -15,12 +22,14 @@ function addCategoryToDatabase($user_id, $name, $description, $image, $parent_id
     if ($stmt->affected_rows > 0) {
         $category_id = $stmt->insert_id;
 
+        $apiUrlModel->createUrl('category', $category_id, $name);
+
         $sql = "INSERT INTO " . PREFIX . "category_description (category_id, name, description, meta_title, meta_description, meta_keyword) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("isssss", $category_id, $name, $description, $meta_title, $meta_description, $meta_keyword);
         $stmt->execute();
 
-        if ($stmt->affected_rows > 0) {
+        if ($stmt->affected_rows > 0) {           
             $stmt->close();
             $conn->close();
             return createResponse("Categoria adicionada com sucesso.", 201);
@@ -63,6 +72,9 @@ function getAllCategories($category_id = null) {
     while ($row = $result->fetch_assoc()) {
         $category_id = $row['category_id'];
 
+        $apiUrlModel = new ApiUrlModel();
+        $friendlyUrl = $apiUrlModel->getUrlValue('category', $category_id);
+
         $categories[] = array(
             'id' => $category_id,
             'name' => $row['name'],
@@ -70,6 +82,7 @@ function getAllCategories($category_id = null) {
             'parent_id' => $row['parent_id'],
             'sort_order' => $row['sort_order'],
             'status' => $row['status'],
+            'url' => $friendlyUrl,
             'created_at' => $row['created_at'],
             'updated_at' => $row['updated_at'],
             'description' => $row['description'],
@@ -194,6 +207,13 @@ function deleteCategoryFromDatabase($user_id, $category_id) {
     $stmt_category = $conn->prepare($sql_category);
     $stmt_category->bind_param("i", $category_id);
     $stmt_category->execute();
+
+    $apiUrlModel = new ApiUrlModel();
+    $urlDelete = $apiUrlModel->deleteUrl('category', $category_id);
+
+    if (isset($urlDelete['error'])) {
+        return createResponse("Erro ao deletar URL amigável: " . $urlDelete['error'] , 500);
+    }
 
     if ($stmt_category->affected_rows > 0) {
         insertLog($user_id, "category_id=$category_id", "deleted");

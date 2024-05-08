@@ -13,6 +13,14 @@ class ProductModel {
     }
 
     public function addProductToDatabaseHelper($user_id, $brand_id, $categories, $price, $cost_price, $weight, $length, $width, $height, $sku, $sort_order, $minimum, $status, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume) {
+
+        $apiUrlModel = new ApiUrlModel();
+        $urlCreationResult = $apiUrlModel->valid($name);
+
+        if ($urlCreationResult) {
+            return createResponse("Url Amigável já existe, altere o nome!", 500);
+        }
+
         $sql = "INSERT INTO " . PREFIX . "product 
                 (brand_id, categories, price, cost_price, weight, length, width, height, sku, sort_order, minimum, status, created_by_user_id, updated_by_user_id) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -31,12 +39,7 @@ class ProductModel {
             $stmt_description->bind_param("isssssss", $product_id, $name, $description, $tags, $meta_title, $meta_description, $meta_keyword, $description_resume);
             $stmt_description->execute();
 
-            $apiUrlModel = new ApiUrlModel();
-            $urlCreationResult = $apiUrlModel->createUrl('product', $product_id, $name);
-
-            if (isset($urlCreationResult['error'])) {
-                return createResponse("Erro ao preparar URL amigável para o produto: " . $urlCreationResult['error'] , 500);
-            }
+            $apiUrlModel->createUrl('product', $product_id, $name);
 
             $stmt->close();
             $stmt_description->close();
@@ -86,7 +89,7 @@ class ProductModel {
             $product_id = $row['product_id'];
 
             $apiUrlModel = new ApiUrlModel();
-            $productUrls = $apiUrlModel->getUrlValue('product', $product_id);
+            $friendlyUrl = $apiUrlModel->getUrlValue('product', $product_id);
 
             $sql_images = "SELECT image_id, url, name FROM " . PREFIX . "product_image WHERE product_id = ?";
             $stmt_images = $this->conn->prepare($sql_images);
@@ -142,7 +145,7 @@ class ProductModel {
                 'sort_order' => $row['sort_order'],
                 'minimum' => $row['minimum'],
                 'status' => $row['status'],
-                'url' => $productUrls,
+                'url' => $friendlyUrl,
                 'created_at' => $row['created_at'],
                 'updated_at' => $row['updated_at'],
                 'name' => $row['product_name'],
@@ -332,6 +335,13 @@ class ProductModel {
         $stmt_product->bind_param("i", $product_id);
 
         $stmt_product->execute();
+
+        $apiUrlModel = new ApiUrlModel();
+        $urlDelete = $apiUrlModel->deleteUrl('product', $product_id);
+
+        if (isset($urlDelete['error'])) {
+            return createResponse("Erro ao deletar URL amigável: " . $urlDelete['error'] , 500);
+        }
 
         if ($stmt_product->affected_rows > 0) {
             insertLog($user_id, "product_id=$product_id", "deleted");

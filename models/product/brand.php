@@ -7,6 +7,13 @@ require_once(__DIR__ . '/../../config.php');
 function addBrandToDatabase($user_id, $name, $description, $image, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
     global $conn;
 
+    $apiUrlModel = new ApiUrlModel();
+    $urlCreationResult = $apiUrlModel->valid($name);
+
+    if ($urlCreationResult) {
+        return createResponse("Url Amigável já existe, altere o nome!", 500);
+    }
+
     $sql = "INSERT INTO " . PREFIX . "brand (image, sort_order, status, created_by_user_id) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sisi", $image, $sort_order, $status, $user_id);
@@ -14,6 +21,8 @@ function addBrandToDatabase($user_id, $name, $description, $image, $meta_title, 
 
     if ($stmt->affected_rows > 0) {
         $brand_id = $stmt->insert_id;
+
+        $apiUrlModel->createUrl('brand', $brand_id, $name);
 
         $sql = "INSERT INTO " . PREFIX . "brand_description (brand_id, name, description, meta_title, meta_description, meta_keyword) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
@@ -63,12 +72,16 @@ function getAllBrands($brand_id = null) {
     while ($row = $result->fetch_assoc()) {
         $brand_id = $row['brand_id'];
 
+        $apiUrlModel = new ApiUrlModel();
+        $friendlyUrl = $apiUrlModel->getUrlValue('brand', $brand_id);
+
         $brands[] = array(
             'id' => $brand_id,
             'name' => $row['name'],
             'image' => $row['image'],
             'sort_order' => $row['sort_order'],
             'status' => $row['status'],
+            'url' => $friendlyUrl,
             'created_at' => $row['created_at'],
             'updated_at' => $row['updated_at'],
             'description' => $row['description'],
@@ -189,6 +202,13 @@ function deleteBrandFromDatabase($user_id, $brand_id) {
     $stmt_brand = $conn->prepare($sql_brand);
     $stmt_brand->bind_param("i", $brand_id);
     $stmt_brand->execute();
+
+    $apiUrlModel = new ApiUrlModel();
+    $urlDelete = $apiUrlModel->deleteUrl('brand', $brand_id);
+
+    if (isset($urlDelete['error'])) {
+        return createResponse("Erro ao deletar URL amigável: " . $urlDelete['error'] , 500);
+    }
 
     if ($stmt_brand->affected_rows > 0) {
         insertLog($user_id, "brand_id=$brand_id", "deleted");

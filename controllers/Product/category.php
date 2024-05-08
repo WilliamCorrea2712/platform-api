@@ -20,9 +20,9 @@ function addCategory($user_id) {
             $sort_order = isset($data['sort_order']) ? $data['sort_order'] : null;
             $status = isset($data['status']) ? $data['status'] : null;
 
-            addCategoryToDatabase($user_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status);
+            $result = addCategoryToDatabase($user_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status);
 
-            return createResponse("Categoria adicionada com sucesso.", 201);
+            return $result;
         } else {
             return createResponse("Os campos 'name' e 'description' são obrigatórios.", 400);
         }

@@ -9,6 +9,17 @@ class ApiUrlModel {
         $this->conn = $GLOBALS['conn'];
     }
 
+    public function valid($name) {
+        $formatted_value = $this->formatUrlValue($name);
+        $url_exists = $this->checkUrlExist($formatted_value);
+
+        if ($url_exists !== false) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public function createUrl($key, $id, $value) {
         $formatted_value = $this->formatUrlValue($value);
     
@@ -95,5 +106,23 @@ class ApiUrlModel {
             return '';
         }
     }    
+
+    public function deleteUrl($key, $id) {
+        $sql = "DELETE FROM " . PREFIX . "urls WHERE `key` = ? AND id = ?";
+        $stmt = $this->conn->prepare($sql);
+    
+        if (!$stmt) {
+            return array("error" => "Erro ao preparar a declaração SQL: " . $this->conn->error);
+        }
+    
+        $stmt->bind_param("si", $key, $id);
+        $stmt->execute();
+    
+        if ($stmt->affected_rows > 0) {
+            return array("success" => "URL deletada com sucesso.");
+        } else {
+            return array("error" => "Erro ao deletar a URL: " . $this->conn->error);
+        }
+    }
 }
 ?>
