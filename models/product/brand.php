@@ -187,7 +187,7 @@ class BrandModel {
         $stmt_description->close();
         $this->conn->close();
         
-        return createResponse("marca atualizada com sucesso.", 200);
+        return createResponse("Marca atualizada com sucesso.", 200);
     }
 
     function deleteBrandFromDatabase($user_id, $brand_id) {
