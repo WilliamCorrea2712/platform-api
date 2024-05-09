@@ -33,14 +33,14 @@ class CategoryController {
         }
     }
 
-    public static function getCategories($category_id = null) {
+    public static function getCategories($category_id, $parent_id) {
         $categoryModel = new CategoryModel();
-        $categories = $categoryModel->getAllCategories($category_id);
+        $retult = $categoryModel->getAllCategories($category_id, $parent_id);
 
-        if (!empty($categories)) {
-            return createResponse(array('categories' => $categories), 200); 
+        if (!empty($retult)) {
+            return createResponse(array('categories' => $retult), 200); 
         } else {
-            return createResponse(array('error' => "Nenhum usuário encontrado."), 404);
+            return $retult;
         }
     }
 

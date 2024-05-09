@@ -80,12 +80,18 @@ require_once __DIR__ . '/../bootstrap.php';
                 strpos($route, "product/getProducts") !== false ||
                 strpos($route, "product/getAllProductLists") !== false ||
                 strpos($route, "user/getUsers") !== false){
-                    
-            if (isset($_GET['id'])){
-                $handler($_GET['id']);
-            } else{
-                $handler();
+
+            if (isset($_GET['id'])) {
+                $id = $_GET['id'];
+            } else {
+                $id = null;
+            }            
+            if (isset($_GET['parent_id'])) {
+                $parent_id = $_GET['parent_id'];
+            } else {
+                $parent_id = null;
             }
+            $handler($id, $parent_id);     
         } else if(strpos($route, "config/getDynamicSetting") !== false){                    
             if (isset($_GET['id'])) {
                 $id = $_GET['id'];

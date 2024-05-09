@@ -49,19 +49,31 @@ class CategoryModel {
         }
     }
 
-    function getAllCategories($category_id = null) {
+    function getAllCategories($category_id, $parent_id) {
         $sql = "SELECT c.*, cd.name, cd.description, cd.meta_title, cd.meta_description, cd.meta_keyword
                 FROM " . PREFIX . "category c
-                LEFT JOIN " . PREFIX . "category_description cd ON c.category_id = cd.category_id";
+                LEFT JOIN " . PREFIX . "category_description cd ON c.category_id = cd.category_id WHERE 1 = 1 ";
+
+        if ($category_id !== null && $parent_id !== null) {
+            return createResponse("Somente um parâmetro pode ser passado!", 400);
+        }
 
         if ($category_id !== null) {
-            $sql .= " WHERE c.category_id = ?";
+            $sql .= " AND c.category_id = ? ";
+        }
+
+        if ($parent_id !== null) {
+            $sql .= " AND c.parent_id = ? ";
         }
 
         $stmt = $this->conn->prepare($sql);
 
         if ($category_id !== null) {
             $stmt->bind_param("i", $category_id);
+        }
+
+        if ($parent_id !== null) {
+            $stmt->bind_param("i", $parent_id);
         }
 
         if (!$stmt->execute()) {
@@ -97,7 +109,11 @@ class CategoryModel {
         $stmt->close();
         $this->conn->close();
 
-        return $categories;
+        if (empty($categories)) {
+            return createResponse("Nenhuma categoria encontrada!", 404);
+        } else {
+            return $categories;
+        }        
     }
 
     function editCategoryInDatabase($user_id, $category_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {
