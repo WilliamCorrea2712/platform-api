@@ -249,6 +249,12 @@ class CategoryModel {
         $stmt->bind_param("s", $category_id_string);
         $stmt->execute();
         $result = $stmt->get_result();
+
+        $categoryName = $this->getCategoryName($category_id);
+
+        if (!$categoryName) {
+            return createResponse("Erro ao buscar o nome da categoria.", 500);
+        }
     
         if (!$result) {
             return createResponse("Erro ao buscar produtos: " . $this->conn->error, 500);
@@ -263,8 +269,13 @@ class CategoryModel {
                 $products[] = $product;
             }
         }
+
+        $response = array(
+            "category_name" => $categoryName,
+            "products" => $products
+        );
     
-        return $products;
+        return $response;
     }
 
     private function getProductById($product_id) {
@@ -286,7 +297,7 @@ class CategoryModel {
     
         $images = $this->getProductImages($product_id);
     
-        $stock = $this->getProductStock($product_id);
+        $stock = $this->getProductStock($product_id);        
     
         return array(
             'id' => $row['product_id'],
@@ -318,7 +329,7 @@ class CategoryModel {
     }   
 
     private function getProductImages($product_id) {
-        $sql = "SELECT image_id, url, name FROM api_product_image WHERE product_id = ?";
+        $sql = "SELECT image_id, url, name FROM " . PREFIX . "product_image WHERE product_id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $product_id);
         $stmt->execute();
@@ -338,8 +349,8 @@ class CategoryModel {
 
     private function getProductStock($product_id) {
         $sql = "SELECT pav.*, pa.name 
-                FROM api_product_attribute_value pav
-                INNER JOIN api_product_attribute pa ON pav.attribute_id = pa.id
+                FROM " . PREFIX . "product_attribute_value pav
+                INNER JOIN " . PREFIX . "product_attribute pa ON pav.attribute_id = pa.id
                 WHERE pav.product_id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $product_id);
@@ -368,6 +379,22 @@ class CategoryModel {
         $apiUrlModel = new ApiUrlModel();
         $friendlyUrl = $apiUrlModel->getUrlValue('product', $product_id);
         return $friendlyUrl;
+    }    
+
+    private function getCategoryName($category_id){
+        $sql = "SELECT name FROM " . PREFIX . "category_description WHERE category_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $category_id);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            return $row['name'];
+        } else {
+            return null; 
+        }
     }    
 }
 ?>
