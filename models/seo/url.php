@@ -9,6 +9,26 @@ class ApiUrlModel {
         $this->conn = $GLOBALS['conn'];
     }
 
+    public function getUrlData($value) {
+        $formatted_value = $this->formatUrlValue($value);
+        $sql = "SELECT `key`, id FROM " . PREFIX . "urls WHERE `value` = ?";
+        $stmt = $this->conn->prepare($sql);
+    
+        if (!$stmt) {
+            return false;
+        }
+    
+        $stmt->bind_param("s", $formatted_value);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        } else {
+            return false;
+        }
+    }    
+
     public function valid($name) {
         $formatted_value = $this->formatUrlValue($name);
         $url_exists = $this->checkUrlExist($formatted_value);

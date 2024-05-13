@@ -48,6 +48,7 @@ require_once __DIR__ . '/../bootstrap.php';
         CONFIG. "editDynamicSetting" => "editDynamicSetting",
         CONFIG. "deleteDynamicSetting" => "deleteDynamicSetting",        
         CONFIG. "getDynamicSetting" => "getDynamicSetting",
+        SEO. "getUrl" => "ApiUrlController::getUrl",
     );
 
     if (isset($_GET['route']) && isset($routes[$_GET['route']])) {
@@ -70,6 +71,8 @@ require_once __DIR__ . '/../bootstrap.php';
             require_once __DIR__ . "/../config/controller/dynamicSetting.php";
         } else if (strpos($route, "checkout/") === 0) {
             require_once __DIR__ . "/../checkout/cart.php";
+        }else if (strpos($route, "seo/") === 0) {
+            require_once __DIR__ . "/../controllers/seo/url.php";
         }
 
         if(strpos($route, "user/addUser") !== false){
@@ -91,7 +94,13 @@ require_once __DIR__ . '/../bootstrap.php';
             } else {
                 $parent_id = null;
             }
-            $handler($id, $parent_id);     
+            $handler($id, $parent_id);  
+        } else if(strpos($route, "seo/getUrl") !== false){
+            if (isset($_GET['url'])) {
+                $handler($_GET['url']); 
+            } else {
+                $handler(); 
+            }             
         } else if(strpos($route, "config/getDynamicSetting") !== false){                    
             if (isset($_GET['id'])) {
                 $id = $_GET['id'];

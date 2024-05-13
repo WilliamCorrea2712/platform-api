@@ -5,3 +5,4 @@
     define("USER", "user/");
     define("CHECKOUT", "checkout/");
     define("CONFIG", "config/");
+    define("SEO", "seo/");
