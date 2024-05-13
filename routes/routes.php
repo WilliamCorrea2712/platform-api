@@ -34,6 +34,7 @@ require_once __DIR__ . '/../bootstrap.php';
         PRODUCT . "editBrand" => "BrandController::editBrand",
         PRODUCT . "deleteBrand" => "BrandController::deleteBrand",
         PRODUCT . "getBrands" => "BrandController::getBrands",
+        PRODUCT . "getProductsBrand" => "BrandController::getProductsBrand",
         PRODUCT . "addStockOptions" => "addStockOptions",
         PRODUCT . "editStockOptions" => "editStockOptions",
         PRODUCT . "deleteStockOptions" => "deleteStockOptions",

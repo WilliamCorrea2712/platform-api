@@ -102,5 +102,20 @@ class BrandController {
             return createResponse("Método não permitido.", 405);
         }
     }
+
+    public static function getProductsBrand($brand_id) {
+        if (empty($brand_id)) {
+            return createResponse("O parâmetro 'id' não foi fornecido.", 400);
+        }
+
+        $brandModel = new BrandModel();
+        $retult = $brandModel->getProductsBrand($brand_id);
+
+        if (!empty($retult)) {
+            return createResponse(array('products' => $retult), 200); 
+        } else {
+            return $retult;
+        }
+    }
 }
 ?>

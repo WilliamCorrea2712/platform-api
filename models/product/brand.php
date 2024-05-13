@@ -221,5 +221,159 @@ class BrandModel {
             return createResponse("Erro ao excluir a marca: " . $this->conn->error, 500);
         }
     }
+
+    public function getProductsBrand($brand_id) {
+        $sql = "SELECT product_id FROM " . PREFIX . "product WHERE brand_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $brand_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $brandName = $this->getBrandName($brand_id);
+
+        if (!$brandName) {
+            return createResponse("Erro ao buscar o nome da marca.", 500);
+        }
+    
+        if (!$result) {
+            return createResponse("Erro ao buscar produtos: " . $this->conn->error, 500);
+        }
+    
+        $products = array();
+    
+        while ($row = $result->fetch_assoc()) {
+            $product_id = $row['product_id'];
+            $product = $this->getProductById($product_id);
+            if ($product) {
+                $products[] = $product;
+            }
+        }
+
+        $response = array(
+            "category_name" => $brandName,
+            "products" => $products
+        );
+    
+        return $response;
+    }
+
+    private function getProductById($product_id) {
+        $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, 
+            pd.meta_description, pd.meta_keyword, pd.description_resume, pd.tags
+                FROM " . PREFIX . "product p
+                LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id
+                WHERE p.product_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $product_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows === 0) {            
+            return null;
+        }
+    
+        $row = $result->fetch_assoc();
+    
+        $images = $this->getProductImages($product_id);
+    
+        $stock = $this->getProductStock($product_id);        
+    
+        return array(
+            'id' => $row['product_id'],
+            'brand_id' => $row['brand_id'],
+            'categories' => json_decode($row['categories']),
+            'price' => $row['price'],
+            'cost_price' => $row['cost_price'],
+            'weight' => $row['weight'],
+            'length' => $row['length'],
+            'width' => $row['width'],
+            'height' => $row['height'],
+            'sku' => $row['sku'],
+            'sort_order' => $row['sort_order'],
+            'minimum' => $row['minimum'],
+            'status' => $row['status'],
+            'url' => $this->getProductUrl($product_id), 
+            'created_at' => $row['created_at'],
+            'updated_at' => $row['updated_at'],
+            'name' => $row['product_name'],
+            'description' => $row['product_description'],
+            'description_resume' => $row['description_resume'],
+            'meta_title' => $row['meta_title'],
+            'meta_description' => $row['meta_description'],
+            'meta_keyword' => $row['meta_keyword'],
+            'tags' => $row['tags'],
+            'images' => $images,
+            'stock' => $stock,
+        );
+    }   
+
+    private function getProductImages($product_id) {
+        $sql = "SELECT image_id, url, name FROM " . PREFIX . "product_image WHERE product_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $product_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        $images = array();
+        while ($row_image = $result->fetch_assoc()) {
+            $images[] = array(
+                'image_id' => $row_image['image_id'],
+                'image_url' => $row_image['url'],
+                'image_name' => $row_image['name'],
+            );
+        }
+    
+        return $images;
+    }
+
+    private function getProductStock($product_id) {
+        $sql = "SELECT pav.*, pa.name 
+                FROM " . PREFIX . "product_attribute_value pav
+                INNER JOIN " . PREFIX . "product_attribute pa ON pav.attribute_id = pa.id
+                WHERE pav.product_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $product_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    
+        $stock = array();
+        while ($row_stock = $result->fetch_assoc()) {
+            $stock[] = array(
+                'stock_id' => $row_stock['id'],
+                'name' => $row_stock['name'],
+                'value' => $row_stock['value'],
+                'attribute_id' => $row_stock['attribute_id'],
+                'parent_attribute_id' => $row_stock['parent_attribute_id'],
+                'quantity' => $row_stock['quantity'],
+                'stock_cart' => $row_stock['stock_cart'] ?? 0,
+                'operation_type' => $row_stock['operation_type'],
+                'additional_value' => $row_stock['additional_value']
+            );
+        }
+    
+        return $stock;
+    }    
+
+    private function getProductUrl($product_id) {
+        $apiUrlModel = new ApiUrlModel();
+        $friendlyUrl = $apiUrlModel->getUrlValue('product', $product_id);
+        return $friendlyUrl;
+    }    
+
+    private function getBrandName($brand_id){
+        $sql = "SELECT name FROM " . PREFIX . "brand_description WHERE brand_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $brand_id);
+        $stmt->execute();
+        
+        $result = $stmt->get_result();
+    
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            return $row['name'];
+        } else {
+            return null; 
+        }
+    } 
 }
 ?>
