@@ -250,7 +250,7 @@ class BrandModel {
         }
 
         $response = array(
-            "category_name" => $brandName,
+            "brand_name" => $brandName,
             "products" => $products
         );
     
