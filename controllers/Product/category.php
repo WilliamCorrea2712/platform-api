@@ -103,5 +103,20 @@ class CategoryController {
             return createResponse("Método não permitido.", 405);
         }
     }
+
+    public static function getProductsCategory($category_id) {
+        if (empty($category_id)) {
+            return createResponse("O parâmetro 'id' não foi fornecido.", 400);
+        }
+
+        $categoryModel = new CategoryModel();
+        $retult = $categoryModel->getProductsCategory($category_id);
+
+        if (!empty($retult)) {
+            return createResponse(array('products' => $retult), 200); 
+        } else {
+            return $retult;
+        }
+    }
 }
 ?>
