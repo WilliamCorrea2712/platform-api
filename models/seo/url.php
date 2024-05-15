@@ -138,11 +138,7 @@ class ApiUrlModel {
         $stmt->bind_param("si", $key, $id);
         $stmt->execute();
     
-        if ($stmt->affected_rows > 0) {
-            return array("success" => "URL deletada com sucesso.");
-        } else {
-            return array("error" => "Erro ao deletar a URL: " . $this->conn->error);
-        }
+        return true;
     }
 }
 ?>
