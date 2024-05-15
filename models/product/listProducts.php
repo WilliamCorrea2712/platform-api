@@ -4,6 +4,13 @@ require_once __DIR__ . '/../../global/helpers.php';
 
 function addProductListToDatabase($user_id, $name, $products, $sort_order, $status) {
     global $conn;
+    
+    $apiUrlModel = new ApiUrlModel();
+    $urlCreationResult = $apiUrlModel->valid($name);
+
+    if ($urlCreationResult) {
+        return createResponse("Url Amigável já existe, altere o nome!", 500);
+    }
 
     $sql = "INSERT INTO " . PREFIX . "product_lists (name, products, sort_order, status, created_by_user_id, updated_by_user_id) 
             VALUES (?, ?, ?, ?, ?, ?)";
@@ -14,6 +21,8 @@ function addProductListToDatabase($user_id, $name, $products, $sort_order, $stat
 
     if ($stmt->affected_rows > 0) {
         $product_list_id = $stmt->insert_id;
+        $apiUrlModel->createUrl('list', $product_list_id, $name);
+
         $stmt->close();
         $conn->close();
         return $product_list_id;
@@ -45,7 +54,11 @@ function getAllProductListsFromDatabase($id = null) {
     $product_lists = array();
 
     if ($result->num_rows > 0) {
+        $apiUrlModel = new ApiUrlModel();
+        $friendlyUrl = $apiUrlModel->getUrlValue('list', $id);
+
         while ($row = $result->fetch_assoc()) {
+            $row['url'] = $friendlyUrl;
             $product_lists[] = $row;
         }
     }
@@ -54,7 +67,6 @@ function getAllProductListsFromDatabase($id = null) {
     $conn->close();
     return $product_lists;
 }
-
 
 function editProductListInDatabase($user_id, $list_id, $name, $products, $sort_order, $status) {
     global $conn;
@@ -104,6 +116,13 @@ function deleteProductListFromDatabase($user_id, $list_id) {
     $sql = "DELETE FROM " . PREFIX . "product_lists WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $list_id);
+
+    $apiUrlModel = new ApiUrlModel();
+    $urlDelete = $apiUrlModel->deleteUrl('list', $list_id);
+
+    if (isset($urlDelete['error'])) {
+        return createResponse("Erro ao deletar URL amigável: " . $urlDelete['error'] , 500);
+    }
 
     if ($stmt->execute()) {
         insertLog($user_id, "product_list_id=$list_id", "deleted");
