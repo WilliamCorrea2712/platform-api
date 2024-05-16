@@ -279,11 +279,7 @@ function deleteAddress($user_id) {
 
             $result = deleteAddressFromDatabase($user_id, $address_id);
 
-            if ($result['success']) {
-                return createResponse("Endereço excluído com sucesso.", 200);
-            } else {
-                return createResponse("Erro ao excluir endereço: " . $result['error'], 500);
-            }
+            return $result;
         } else {
             return createResponse("ID do endereço não fornecido.", 400);
         }
