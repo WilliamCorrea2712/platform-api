@@ -16,6 +16,7 @@ require_once __DIR__ . '/../bootstrap.php';
         ACCOUNT . "editCustomer" => "editCustomer",
         ACCOUNT . "deleteCustomer" => "deleteCustomer",
         ACCOUNT . "getCustomers" => "getCustomers",
+        ACCOUNT . "login" => "login",
         ACCOUNT . "addAddress" => "addAddress",
         ACCOUNT . "editAddress" => "editAddress",
         ACCOUNT . "deleteAddress" => "deleteAddress",

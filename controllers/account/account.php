@@ -291,4 +291,30 @@ function deleteAddress($user_id) {
         return createResponse("Método não permitido.", 405);
     }
 }
+
+function login() {
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        $postData = json_decode(file_get_contents('php://input'), true);
+
+        if (isset($postData['email']) && isset($postData['password'])) {
+            $email = $postData['email'];
+            $password = $postData['password'];
+
+            if (empty($email)) {
+                return createResponse("O email é obrigatório!", 400);
+            }
+            if (empty($password)) {
+                return createResponse("A senha é obrigatória!", 400);
+            }
+
+            $result = loginCustomer($email, $password);
+
+            return $result;
+        } else {
+            return createResponse("Dados incompletos.", 400);
+        }
+    } else {
+        return createResponse("Método não permitido.", 405);
+    }
+}
 ?>

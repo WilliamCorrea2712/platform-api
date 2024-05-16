@@ -279,4 +279,29 @@ function deleteAddressFromDatabase($user_id, $address_id) {
         return createResponse("Erro ao excluir endereço: " . $stmt->error, 500);
     }
 }
+
+function loginCustomer($email, $password) {
+    global $conn;
+
+    $sql = "SELECT id, name, password FROM " . PREFIX . "customers WHERE email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $customer = $result->fetch_assoc();
+        $hashed_password = $customer['password'];
+
+        if (password_verify($password, $hashed_password)) {
+            $customer_id = $customer['id'];
+            $token = generateToken($customer_id);
+            return createResponse(array("customer_id" => $customer_id, "token" => $token), 200);
+        } else {
+            return createResponse("Senha Incorreta.", 401);
+        }
+    } else {
+        return createResponse("E-mail não encontrado.", 404);
+    }
+}
 ?>
