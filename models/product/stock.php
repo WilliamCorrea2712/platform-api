@@ -353,7 +353,7 @@ class ProductStockModel {
         }
     }
 
-    public function saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $session) {
+    public function saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $session, $customer_id) {
         global $conn;
 
         $current_quantity_data = $this->getCurrentQuantity($product_id, $id, $attribute_id);
@@ -379,7 +379,7 @@ class ProductStockModel {
         if ($existing_entry) {
             if ($operation === 'add') {
                 if($quantity > $existing_entry['quantity']){
-                    return createResponse("Quantidade enviada é maior do que o atual carrinho", 400);
+                    return createResponse("Quantidade '$quantity' enviada e maior do que o atual carrinho", 400);
                 }
                 $new_quantityCart = $existing_entry['quantity'] - $quantity;
             } elseif ($operation === 'subtract') {
@@ -398,9 +398,9 @@ class ProductStockModel {
                 return ['status' => 500, 'message' => "Falha ao atualizar a quantidade no carrinho temporário."];
             }
         } else {
-            $sql = "INSERT INTO " . PREFIX . "temporary_cart (by_user_id, product_id, id, attribute_id, quantity, session_id) VALUES (?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO " . PREFIX . "temporary_cart (by_user_id, product_id, id, attribute_id, quantity, session_id, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiiiis", $user_id, $product_id, $id, $attribute_id, $quantity, $session);
+            $stmt->bind_param("iiiiisi", $user_id, $product_id, $id, $attribute_id, $quantity, $session, $customer_id);
             $stmt->execute();
     
             if ($stmt->affected_rows > 0) {

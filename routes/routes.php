@@ -127,11 +127,19 @@ require_once __DIR__ . '/../bootstrap.php';
             }
             $handler($id, $key, $name, $group_name);
         } else if(strpos($route, "checkout/getProductsCart") !== false || strpos($route, "checkout/clearSession") !== false){
-            if (isset($_GET['session_id'])){
-                $handler($user_id, $_GET['session_id']);
-            } else{
-                return createResponse("O 'session_id' é obrigatória!", 400);
-            }
+            if (isset($_GET['session_id'])) {
+                $session_id = $_GET['session_id'];
+            } else {
+                $session_id = null;
+            }      
+            if (isset($_GET['customer_id'])) {
+                $customer_id = $_GET['customer_id'];
+            } else {
+                $customer_id = null;
+            } 
+
+            $handler($user_id, $session_id, $customer_id);
+            
         } else {
             if(isset($user_id) && $user_id > 0){
                 $handler($user_id);

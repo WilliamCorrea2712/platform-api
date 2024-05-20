@@ -1,5 +1,8 @@
 <?php
-session_start();
+if (session_status() == 'CART') {
+    session_start();
+}
+
 
 require_once __DIR__ . '/../global/helpers.php';
 require_once __DIR__ . '/../models/product/stock.php';
@@ -24,7 +27,7 @@ class ShoppingCart {
         $required_variables = ['product_id', 'id', 'attribute_id', 'quantity'];
         foreach ($required_variables as $variable) {
             if (!isset($data[$variable])) {
-                return createResponse("A variável '$variable' é obrigatória.", 400);
+                return createResponse("A variavel '$variable' e obrigatoria.", 400);
             }
         }
 
@@ -37,6 +40,7 @@ class ShoppingCart {
         $id = $data['id'];
         $attribute_id = $data['attribute_id'];
         $quantity = $data['quantity'];
+        $customer_id = isset($data['customer_id'])?$data['customer_id'] : 0;
 
         $productStockModel = new ProductStockModel(); 
         if (!$productStockModel->stockOptionExists($product_id, $id, $attribute_id)) {
@@ -60,7 +64,7 @@ class ShoppingCart {
             );
         }
 
-        $result = $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, session_id());
+        $result = $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, session_id(), $customer_id);
 
         if (isset($result['status']) && $result['status'] !== 200) {
             return createResponse($result['message'], $result['status']);
@@ -76,9 +80,9 @@ class ShoppingCart {
         return false;
     }
 
-    public static function getProductsCart($session_id) {
+    public static function getProductsCart($user_id, $session_id, $customer_id) {
         $cartModel = new CartModel();
-        $products = $cartModel->getProductsCart($session_id);
+        $products = $cartModel->getProductsCart($user_id, $session_id, $customer_id);
     
         if ($products) {
             return createResponse($products, 200);
