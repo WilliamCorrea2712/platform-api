@@ -49,10 +49,11 @@ class CategoryModel {
         }
     }
 
-    function getAllCategories($category_id, $parent_id) {
+    public function getAllCategories($category_id, $parent_id) {
         $sql = "SELECT c.*, cd.name, cd.description, cd.meta_title, cd.meta_description, cd.meta_keyword
                 FROM " . PREFIX . "category c
-                LEFT JOIN " . PREFIX . "category_description cd ON c.category_id = cd.category_id WHERE 1 = 1 ";
+                LEFT JOIN " . PREFIX . "category_description cd ON c.category_id = cd.category_id 
+                WHERE 1 = 1 ";
 
         if ($category_id !== null && $parent_id !== null) {
             return createResponse("Somente um parâmetro pode ser passado!", 400);
@@ -60,9 +61,7 @@ class CategoryModel {
 
         if ($category_id !== null) {
             $sql .= " AND c.category_id = ? ";
-        }
-
-        if ($parent_id !== null) {
+        } elseif ($parent_id !== null) {
             $sql .= " AND c.parent_id = ? ";
         }
 
@@ -70,9 +69,7 @@ class CategoryModel {
 
         if ($category_id !== null) {
             $stmt->bind_param("i", $category_id);
-        }
-
-        if ($parent_id !== null) {
+        } elseif ($parent_id !== null) {
             $stmt->bind_param("i", $parent_id);
         }
 
@@ -112,8 +109,30 @@ class CategoryModel {
         if (empty($categories)) {
             return createResponse("Nenhuma categoria encontrada!", 404);
         } else {
-            return $categories;
-        }        
+            return $this->organizeCategories($categories);
+        }
+    }
+
+    private function organizeCategories($categories) {
+        $organizedCategories = [];
+        $subCategories = [];
+
+        foreach ($categories as $category) {
+            if ($category['parent_id'] === null) {
+                $organizedCategories[$category['id']] = $category;
+                $organizedCategories[$category['id']]['subcategories'] = [];
+            } else {
+                $subCategories[$category['parent_id']][] = $category;
+            }
+        }
+
+        foreach ($subCategories as $parentId => $subs) {
+            if (isset($organizedCategories[$parentId])) {
+                $organizedCategories[$parentId]['subcategories'] = $subs;
+            }
+        }
+
+        return array_values($organizedCategories);
     }
 
     function editCategoryInDatabase($user_id, $category_id, $name, $description, $image, $parent_id, $meta_title, $meta_description, $meta_keyword, $sort_order, $status) {

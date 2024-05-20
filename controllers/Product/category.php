@@ -35,14 +35,18 @@ class CategoryController {
 
     public static function getCategories($category_id, $parent_id) {
         $categoryModel = new CategoryModel();
-        $retult = $categoryModel->getAllCategories($category_id, $parent_id);
-
-        if (!empty($retult)) {
-            return createResponse(array('categories' => $retult), 200); 
-        } else {
-            return $retult;
+        $result = $categoryModel->getAllCategories($category_id, $parent_id);
+    
+        if (is_array($result) && isset($result['status_code'])) {
+            return $result;
         }
-    }
+    
+        if (!empty($result)) {
+            return createResponse(array('categories' => $result), 200);
+        } else {
+            return createResponse("Nenhuma categoria encontrada!", 404);
+        }
+    }    
 
     public static function editCategory($user_id) {
         if ($_SERVER["REQUEST_METHOD"] == "PATCH") { 
