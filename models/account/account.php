@@ -298,7 +298,7 @@ function loginCustomer($email, $password) {
             $token = generateToken($customer_id);
             return createResponse(array("customer_id" => $customer_id, "token" => $token), 200);
         } else {
-            return createResponse("Senha Incorreta.", 401);
+            return createResponse("Senha e/ou e-mail Incorretos.", 401);
         }
     } else {
         return createResponse("E-mail não encontrado.", 404);
