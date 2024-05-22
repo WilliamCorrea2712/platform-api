@@ -400,5 +400,39 @@ class ProductModel {
             return array("status" => 500, "response" => "Erro ao excluir a imagem do produto: " . $this->conn->error);
         }
     }
+
+    public function searchProducts($value) {
+        $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, pd.meta_description, pd.meta_keyword, pd.description_resume, pd.tags
+                FROM " . PREFIX . "product p
+                LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id
+                WHERE pd.name LIKE ? OR pd.description LIKE ? OR pd.meta_title LIKE ? OR pd.meta_description LIKE ? OR pd.tags LIKE ?";
+    
+        $stmt = $this->conn->prepare($sql);
+    
+        if (!$stmt) {
+            return createResponse("Erro na preparação da consulta: " . $this->conn->error, 500);
+        }
+    
+        $search_value = "%" . $value . "%";
+        $stmt->bind_param("sssss", $search_value, $search_value, $search_value, $search_value, $search_value);
+    
+        if (!$stmt->execute()) {
+            return createResponse("Erro ao buscar produtos: " . $this->conn->error, 500);
+        }
+    
+        $result = $stmt->get_result();
+        $products = array();
+    
+        if ($result->num_rows === 0) {
+            return $products;
+        }
+    
+        while ($row = $result->fetch_assoc()) {
+            $products[] = $row;
+        }
+    
+        return $products;
+    }
+    
 }
 ?>

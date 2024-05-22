@@ -222,5 +222,28 @@ class ProductController {
             return createResponse("Método não permitido.", 405);
         }
     }
+
+    public static function searchProducts() {
+        if ($_SERVER["REQUEST_METHOD"] == "GET") { 
+            $data = json_decode(file_get_contents("php://input"), true);    
+
+            if (empty($data['value'])) {
+                return createResponse("O valor de pesquisa não pode estar vazio.", 400);
+            }
+
+            $value = $data['value'];
+
+            $productModel = new ProductModel();
+            $products = $productModel->searchProducts($value);
+
+            if (!empty($products)) {
+                return createResponse(array('products' => $products), 200); 
+            } else {
+                return createResponse(array('error' => "Nenhum produto encontrado para o valor de pesquisa fornecido."), 404);
+            }
+        } else {
+            return createResponse("Método não permitido.", 405);
+        }
+    }
 }
 ?>

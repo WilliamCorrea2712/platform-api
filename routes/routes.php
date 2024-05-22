@@ -26,6 +26,7 @@ require_once __DIR__ . '/../bootstrap.php';
         PRODUCT . "addProductImages" => "ProductController::addProductImages",
         PRODUCT . "deleteProductImages" => "ProductController::deleteProductImages",
         PRODUCT . "getProducts" => "ProductController::getProducts",
+        PRODUCT . "searchProducts" => "ProductController::searchProducts",
         PRODUCT . "addCategory" => "CategoryController::addCategory",
         PRODUCT . "editCategory" => "CategoryController::editCategory",
         PRODUCT . "deleteCategory" => "CategoryController::deleteCategory",
