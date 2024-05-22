@@ -402,7 +402,8 @@ class ProductModel {
     }
 
     public function searchProducts($value) {
-        $sql = "SELECT p.*, pd.name as product_name, pd.description as product_description, pd.meta_title, pd.meta_description, pd.meta_keyword, pd.description_resume, pd.tags
+        $sql = "SELECT p.*, pd.name, pd.description, pd.meta_title, 
+                pd.meta_description, pd.meta_keyword, pd.description_resume, pd.tags
                 FROM " . PREFIX . "product p
                 LEFT JOIN " . PREFIX . "product_description pd ON p.product_id = pd.product_id
                 WHERE pd.name LIKE ? OR pd.description LIKE ? OR pd.meta_title LIKE ? OR pd.meta_description LIKE ? OR pd.tags LIKE ?";
@@ -428,11 +429,81 @@ class ProductModel {
         }
     
         while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
+            $product_id = $row['product_id'];
+    
+            $apiUrlModel = new ApiUrlModel();
+            $friendlyUrl = $apiUrlModel->getUrlValue('product', $product_id);
+    
+            $sql_images = "SELECT image_id, url, name FROM " . PREFIX . "product_image WHERE product_id = ?";
+            $stmt_images = $this->conn->prepare($sql_images);
+            $stmt_images->bind_param("i", $product_id);
+            $stmt_images->execute();
+            $result_images = $stmt_images->get_result();
+    
+            $images = array();
+            while ($row_image = $result_images->fetch_assoc()) {
+                $images[] = array(
+                    'image_id' => $row_image['image_id'],
+                    'image_url' => $row_image['url'],
+                    'image_name' => $row_image['name'],
+                );
+            }
+            $stmt_images->close();
+    
+            $sql_stock = "SELECT pav.*, pa.name FROM " . PREFIX . "product_attribute_value pav ";
+            $sql_stock .= "INNER JOIN " . PREFIX . "product_attribute pa ON pav.attribute_id = pa.id";
+            $sql_stock .= " WHERE pav.product_id = ?";
+            $stmt_stock = $this->conn->prepare($sql_stock);
+            $stmt_stock->bind_param("i", $product_id);
+            $stmt_stock->execute();
+            $result_stock = $stmt_stock->get_result();
+    
+            $stock = array();
+            while ($row_stock = $result_stock->fetch_assoc()) {
+                $stock[] = array(
+                    'stock_id' => $row_stock['id'],
+                    'name' => $row_stock['name'],
+                    'value' => $row_stock['value'],
+                    'attribute_id' => $row_stock['attribute_id'],
+                    'parent_attribute_id' => $row_stock['parent_attribute_id'],
+                    'quantity' => $row_stock['quantity'],
+                    'stock_cart' => $row_stock['stock_cart']?$row_stock['stock_cart']:0,
+                    'operation_type' => $row_stock['operation_type'],
+                    'additional_value' => $row_stock['additional_value']
+                );
+            }
+            $stmt_stock->close();
+    
+            $products[] = array(
+                'id' => $product_id,
+                'brand_id' => $row['brand_id'],
+                'categories' => json_decode($row['categories']),
+                'price' => $row['price'],
+                'cost_price' => $row['cost_price'],
+                'weight' => $row['weight'],
+                'length' => $row['length'],
+                'width' => $row['width'],
+                'height' => $row['height'],
+                'sku' => $row['sku'],
+                'sort_order' => $row['sort_order'],
+                'minimum' => $row['minimum'],
+                'status' => $row['status'],
+                'url' => $friendlyUrl,
+                'created_at' => $row['created_at'],
+                'updated_at' => $row['updated_at'],
+                'name' => $row['name'],
+                'description' => $row['description'],
+                'description_resume' => $row['description_resume'],
+                'meta_title' => $row['meta_title'],
+                'meta_description' => $row['meta_description'],
+                'meta_keyword' => $row['meta_keyword'],
+                'tags' => $row['tags'],
+                'images' => $images,
+                'stock' => $stock,
+            );
         }
     
         return $products;
-    }
-    
+    }       
 }
 ?>
