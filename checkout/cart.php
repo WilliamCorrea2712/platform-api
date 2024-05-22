@@ -24,7 +24,7 @@ class ShoppingCart {
             return createResponse("O campo 'operation' é obrigatório.", 400);
         }
         
-        $required_variables = ['product_id', 'id', 'attribute_id', 'quantity'];
+        $required_variables = ['product_id', 'id', 'attribute_id', 'quantity', 'session_id'];
         foreach ($required_variables as $variable) {
             if (!isset($data[$variable])) {
                 return createResponse("A variavel '$variable' e obrigatoria.", 400);
@@ -41,6 +41,7 @@ class ShoppingCart {
         $attribute_id = $data['attribute_id'];
         $quantity = $data['quantity'];
         $customer_id = isset($data['customer_id'])?$data['customer_id'] : 0;
+        $session_id = $data['session_id'];
 
         $productStockModel = new ProductStockModel(); 
         if (!$productStockModel->stockOptionExists($product_id, $id, $attribute_id)) {
@@ -64,7 +65,7 @@ class ShoppingCart {
             );
         }
 
-        $result = $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, session_id(), $customer_id);
+        $result = $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $session_id, $customer_id);
 
         if (isset($result['status']) && $result['status'] !== 200) {
             return createResponse($result['message'], $result['status']);

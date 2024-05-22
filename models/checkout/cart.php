@@ -39,9 +39,7 @@ class CartModel {
         $types = ""; 
     
         if (!empty($customer_id) && !empty($session_id)) {
-            $sql .= "cart.customer_id = ? AND cart.session_id = ?";
-            $params[] = $customer_id;
-            $types .= "i";
+            $sql .= "cart.session_id = ?";
             $params[] = $session_id;
             $types .= "s";
         } elseif (!empty($customer_id)) {
@@ -53,7 +51,7 @@ class CartModel {
             $params[] = $session_id;
             $types .= "s";
         } else {
-            return [];
+            return []; 
         }
     
         $stmt = $conn->prepare($sql);
