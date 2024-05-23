@@ -430,7 +430,7 @@ class ProductStockModel {
 
     public function restoreStockFromCart($user_id, $session_id, $product_id = null, $id = null, $attribute_id = null) {
         global $conn;
-    
+        
         $sql = "SELECT product_id, id, attribute_id, quantity FROM " . PREFIX . "temporary_cart WHERE session_id = ?";
         $params = array($session_id);
         
@@ -448,46 +448,52 @@ class ProductStockModel {
         
         $stmt->execute();
         $result = $stmt->get_result();
-
+        
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
                 $product_id = $row['product_id'];
                 $id = $row['id'];
                 $attribute_id = $row['attribute_id'];
                 $quantity = $row['quantity'];
-
+                
                 $parent_id = $this->getCurrentQuantityParent($product_id, $id)['parent_attribute_id'];
                 $parentQuantity = $this->getCurrentQuantityParent($product_id, $parent_id)['quantity'];
-
+                
                 $sql_update = "UPDATE " . PREFIX . "product_attribute_value SET quantity = quantity + ?, stock_cart = 0 WHERE product_id = ? AND id = ? AND attribute_id = ?";
                 $stmt_update = $conn->prepare($sql_update);
                 $stmt_update->bind_param("iiii", $quantity, $product_id, $id, $attribute_id);
                 $stmt_update->execute();
-
+                
                 if ($stmt->affected_rows > 0) {
                     $new_parent_qtd = $parentQuantity + $quantity;
-    
+                    
                     $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET 
-                                quantity = ?, 
-                                updated_at = NOW(), 
+                    quantity = ?, 
+                    updated_at = NOW(), 
                                 updated_by_user_id = ?
                             WHERE product_id = ? AND id = ?";
-                    $stmt_parent = $conn->prepare($sql_parent);
-                    $stmt_parent->bind_param("iiii", $new_parent_qtd, $user_id, $product_id, $parent_id);
-                    $stmt_parent->execute();
-
-                    if ($stmt_parent->affected_rows > 0) {
+                            $stmt_parent = $conn->prepare($sql_parent);
+                            $stmt_parent->bind_param("iiii", $new_parent_qtd, $user_id, $product_id, $parent_id);
+                            $stmt_parent->execute();
+                            
+                    if ($product_id !== null && $id !== null && $attribute_id !== null) {
+                        $sql_delete = "DELETE FROM " . PREFIX . "temporary_cart WHERE session_id = ? AND product_id = ? AND id = ? AND attribute_id = ?";
+                        $stmt_delete = $conn->prepare($sql_delete);
+                        $stmt_delete->bind_param("ssss", $session_id, $product_id, $id, $attribute_id);
+                    } else {
                         $sql_delete = "DELETE FROM " . PREFIX . "temporary_cart WHERE session_id = ?";
                         $stmt_delete = $conn->prepare($sql_delete);
                         $stmt_delete->bind_param("s", $session_id);
-                        $stmt_delete->execute();
-
+                    }
+                    
+                    $stmt_delete->execute();
+                    
+                    if ($stmt_delete->affected_rows > 0) {
                         $stmt->close();
-
-                        return createResponse("Sessão e carrinho excluidos!", 200);
+                        return createResponse("Sessão e carrinho excluídos!", 200);
                     } else {
                         return createResponse("Falha ao atualizar a opção de estoque pai.", 500);
-                    }    
+                    }                             
                 } else {
                     return ['status' => 500, 'message' => "Falha ao restaurar o estoque para o produto $product_id, ID $id, Atributo $attribute_id."];
                 }
