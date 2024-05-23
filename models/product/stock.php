@@ -132,7 +132,7 @@ class ProductStockModel {
         return self::$insertedId;
     }
 
-    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type, $stock_cart = null) {
+    public function editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type, $stock_cart = null, $session) {
         global $conn;
     
         if (!$this->stockOptionExists($product_id, $id, $attribute_id)) {
@@ -162,7 +162,7 @@ class ProductStockModel {
         $parent_attribute_id = $current_quantity_data['parent_attribute_id'];
 
         if($stock_cart === 'stock_cart'){
-            $qtd_stock = $this->getTemporaryCartEntry($product_id, $id, $attribute_id);
+            $qtd_stock = $this->getTemporaryCartEntry($product_id, $id, $attribute_id, $session);
             $qtd_stock_cart = $qtd_stock['quantity'];
         } else {
             $qtd_stock_cart = 0;
@@ -374,7 +374,7 @@ class ProductStockModel {
             return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
         }
     
-        $existing_entry = $this->getTemporaryCartEntry($product_id, $id, $attribute_id);
+        $existing_entry = $this->getTemporaryCartEntry($product_id, $id, $attribute_id, $session);
     
         if ($existing_entry) {
             if ($operation === 'add') {
@@ -392,7 +392,7 @@ class ProductStockModel {
             $stmt->execute();
     
             if ($stmt->affected_rows > 0) {
-                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, null, null, 'stock_cart');
+                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, null, null, 'stock_cart', $session);
                 return ['status' => 200, 'message' => "Quantidade atualizada no carrinho temporário com sucesso."];
             } else {
                 return ['status' => 500, 'message' => "Falha ao atualizar a quantidade no carrinho temporário."];
@@ -404,7 +404,7 @@ class ProductStockModel {
             $stmt->execute();
     
             if ($stmt->affected_rows > 0) {
-                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, null, null, 'stock_cart');
+                $this->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, null, null, 'stock_cart', $session);
                 return ['status' => 200, 'message' => "Dados salvos no carrinho temporário com sucesso."];
             } else {
                 return ['status' => 500, 'message' => "Falha ao salvar os dados no carrinho temporário."];
@@ -412,12 +412,12 @@ class ProductStockModel {
         }
     }
     
-    public function getTemporaryCartEntry($product_id, $id, $attribute_id) {
+    public function getTemporaryCartEntry($product_id, $id, $attribute_id, $session) {
         global $conn;
     
-        $sql = "SELECT * FROM " . PREFIX . "temporary_cart WHERE product_id = ? AND id = ? AND attribute_id = ?";
+        $sql = "SELECT * FROM " . PREFIX . "temporary_cart WHERE product_id = ? AND id = ? AND attribute_id = ? AND session_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $product_id, $id, $attribute_id);
+        $stmt->bind_param("iiis", $product_id, $id, $attribute_id, $session);
         $stmt->execute();
         $result = $stmt->get_result();
     
@@ -428,12 +428,24 @@ class ProductStockModel {
         }
     }    
 
-    public function restoreStockFromCart($user_id, $session_id) {
+    public function restoreStockFromCart($user_id, $session_id, $product_id = null, $id = null, $attribute_id = null) {
         global $conn;
     
         $sql = "SELECT product_id, id, attribute_id, quantity FROM " . PREFIX . "temporary_cart WHERE session_id = ?";
+        $params = array($session_id);
+        
+        if ($product_id !== null && $id !== null && $attribute_id !== null) {
+            $sql .= " AND product_id = ? AND id = ? AND attribute_id = ?";
+            $params[] = $product_id;
+            $params[] = $id;
+            $params[] = $attribute_id;
+        }
+        
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $session_id);
+        
+        $types = str_repeat('s', count($params)); 
+        $stmt->bind_param($types, ...$params);
+        
         $stmt->execute();
         $result = $stmt->get_result();
 

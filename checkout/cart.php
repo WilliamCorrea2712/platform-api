@@ -116,5 +116,30 @@ class ShoppingCart {
             return createResponse("A sessão ainda não foi definida.", 400);
         }
     }
+
+    public static function removeToCart($user_id){
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return createResponse("Método não permitido. Apenas POST é permitido.", 400);
+        }
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        $required_variables = ['product_id', 'id', 'attribute_id', 'session_id'];
+        foreach ($required_variables as $variable) {
+            if (!isset($data[$variable])) {
+                return createResponse("A variavel '$variable' e obrigatoria.", 400);
+            }
+        }
+
+        $product_id = $data['product_id'];
+        $id = $data['id'];
+        $attribute_id = $data['attribute_id'];
+        $session_id = $data['session_id'];
+
+        $productStockModel = new ProductStockModel();
+        $result = $productStockModel->restoreStockFromCart($user_id, $session_id, $product_id, $id, $attribute_id);
+
+        return $result;    
+    }
 }
 ?>
