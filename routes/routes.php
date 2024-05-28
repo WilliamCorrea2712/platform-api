@@ -47,6 +47,7 @@ require_once __DIR__ . '/../bootstrap.php';
         PRODUCT . "getAllProductLists" => "getAllProductLists",                
         CHECKOUT. "addCart" => "ShoppingCart::addCart", 
         CHECKOUT. "removeToCart" => "ShoppingCart::removeToCart", 
+        CHECKOUT. "updateQuantityToCart" => "ShoppingCart::updateQuantityToCart",
         CHECKOUT. "clearSession" => "ShoppingCart::clearSession", 
         CHECKOUT. "getProductsCart" => "ShoppingCart::getProductsCart",         
         CONFIG. "addDynamicSetting" => "addDynamicSetting",

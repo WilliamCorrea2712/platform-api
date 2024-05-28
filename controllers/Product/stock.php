@@ -46,7 +46,7 @@ function editStockOptions($user_id) {
         }
 
         $model = new ProductStockModel();
-        return $model->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type);
+        return $model->editStockOptions($user_id, $product_id, $id, $attribute_id, $quantity, $operation, $additional_value, $operation_type, null, null);
     } else {
         return createResponse("Método não permitido.", 405);
     }

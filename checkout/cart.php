@@ -139,7 +139,67 @@ class ShoppingCart {
         $productStockModel = new ProductStockModel();
         $result = $productStockModel->restoreStockFromCart($user_id, $session_id, $product_id, $id, $attribute_id);
 
-        return $result;    
+        if ($result && isset($result['status'])) {
+            if ($result['status'] === 200) {
+                return createResponse("Estoque restaurado com sucesso.", 200);
+            } else {
+                return createResponse("Falha ao restaurar o estoque: " . $result['message'], 500);
+            }
+        }      
+    }
+    
+    public static function updateQuantityToCart($user_id) 
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return createResponse("Método não permitido. Apenas POST é permitido.", 400);
+        }
+
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        $required_variables = ['product_id', 'id', 'attribute_id', 'session_id', 'operation', 'quantity'];
+        foreach ($required_variables as $variable) {
+            if (!isset($data[$variable])) {
+                return createResponse("A variável '$variable' é obrigatória.", 400);
+            }
+        }
+
+        $product_id = $data['product_id'];
+        $id = $data['id'];
+        $attribute_id = $data['attribute_id'];
+        $quantity = $data['quantity'];
+        $operation = $data['operation'];
+        $session_id = $data['session_id'];
+
+        $productStockModel = new ProductStockModel();
+        if (!$productStockModel->stockOptionExists($product_id, $id, $attribute_id)) {
+            return createResponse("Opção de estoque não encontrada para o produto especificado.", 404);
+        }
+
+        $currentQuantity = $productStockModel->getCurrentQuantity($product_id, $id, $attribute_id);
+        $currentQuantityCart = $productStockModel->getTemporaryCartEntry($product_id, $id, $attribute_id, $session_id);
+
+        $totalQuantityCart = $currentQuantityCart ? $currentQuantityCart['quantity'] : 0;
+        $totalQuantityInStock = $currentQuantity['quantity'];
+
+        
+        if ($operation === 'subtract' && ($totalQuantityInStock + $totalQuantityCart) < $quantity) {
+            return createResponse("Quantidade insuficiente. Não há estoque suficiente para adicionar ao carrinho.", 400);
+        }
+        
+        if($operation === 'subtract'){
+            $difference = $quantity - $totalQuantityCart;
+        } else {
+            $difference = $totalQuantityCart - $quantity;
+            $totalQuantityInStock = ($quantity - $totalQuantityCart) + $difference;
+        }
+        
+        $additional_value = null;
+        $operation_type = null;
+        $stock_cart = 'stock_cart';
+        $productStockModel->saveToTemporaryCart($user_id, $product_id, $id, $attribute_id, abs($difference), $operation, $session_id, null);
+        $result = $productStockModel->editStockOptions($user_id, $product_id, $id, $attribute_id, $totalQuantityInStock, $operation, $additional_value, $operation_type, $stock_cart, $session_id);
+
+        return $result;
     }
 }
 ?>

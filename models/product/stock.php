@@ -156,12 +156,12 @@ class ProductStockModel {
         }
     
         if ($new_quantity < 0) {
-            return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
+            return createResponse("A quantidade $quantity fornecida é maior do que a quantidade disponível no estoque.", 400);
         }
     
         $parent_attribute_id = $current_quantity_data['parent_attribute_id'];
-
-        if($stock_cart === 'stock_cart'){
+    
+        if ($stock_cart === 'stock_cart') {
             $qtd_stock = $this->getTemporaryCartEntry($product_id, $id, $attribute_id, $session);
             $qtd_stock_cart = $qtd_stock['quantity'];
         } else {
@@ -177,7 +177,7 @@ class ProductStockModel {
                         updated_by_user_id = ?,
                         stock_cart = ?
                     WHERE product_id = ? AND id = ?";
-            $stmt = $conn->prepare($sql);            
+            $stmt = $conn->prepare($sql);
             $stmt->bind_param("iidsiiii", $id, $new_quantity, $additional_value, $operation_type, $user_id, $qtd_stock_cart, $product_id, $id);
         } else {
             $sql = "UPDATE " . PREFIX . "product_attribute_value SET 
@@ -189,18 +189,18 @@ class ProductStockModel {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("iiiiii", $id, $new_quantity, $user_id, $qtd_stock_cart, $product_id, $id);
         }
-        
+    
         $stmt->execute();
-        
+    
         if ($stmt->affected_rows > 0) {
             $new_parent_quantity = $this->getCurrentQuantityParent($product_id, $parent_attribute_id, $attribute_id)['quantity'];
-        
+
             if ($operation === 'add') {
                 $new_parent_quantity += $quantity;
             } elseif ($operation === 'subtract') {
                 $new_parent_quantity -= $quantity;
             }
-        
+
             $sql_parent = "UPDATE " . PREFIX . "product_attribute_value SET 
                                 quantity = ?, 
                                 updated_at = NOW(), 
@@ -209,16 +209,14 @@ class ProductStockModel {
             $stmt_parent = $conn->prepare($sql_parent);
             $stmt_parent->bind_param("iiii", $new_parent_quantity, $user_id, $product_id, $parent_attribute_id);
             $stmt_parent->execute();
-        
+
             if ($stmt_parent->affected_rows > 0) {
                 return createResponse("Opção de estoque atualizada com sucesso.", 200);
             } else {
                 return createResponse("Falha ao atualizar a opção de estoque pai.", 500);
             }
-        } else {
-            return createResponse("Falha ao atualizar a opção de estoque.", 500);
-        }        
-    }
+        }
+    }    
     
     public function stockOptionExists($product_id, $id, $attribute_id) {
         global $conn;
@@ -232,7 +230,7 @@ class ProductStockModel {
         return $result->num_rows > 0;
     }
 
-    private function getCurrentQuantity($product_id, $id, $attribute_id) {
+    public function getCurrentQuantity($product_id, $id, $attribute_id) {
         global $conn;
 
         $sql = "SELECT quantity, parent_attribute_id FROM " . PREFIX . "product_attribute_value WHERE product_id = ? AND id = ? AND attribute_id = ?";
@@ -373,7 +371,7 @@ class ProductStockModel {
         if ($new_quantity < 0) {
             return createResponse("A quantidade fornecida é maior do que a quantidade disponível no estoque.", 400);
         }
-    
+
         $existing_entry = $this->getTemporaryCartEntry($product_id, $id, $attribute_id, $session);
     
         if ($existing_entry) {
@@ -386,9 +384,9 @@ class ProductStockModel {
                 $new_quantityCart = $existing_entry['quantity'] + $quantity;
             }
         
-            $sql = "UPDATE " . PREFIX . "temporary_cart SET quantity = ? WHERE product_id = ? AND id = ? AND attribute_id = ?";
+            $sql = "UPDATE " . PREFIX . "temporary_cart SET quantity = ? WHERE product_id = ? AND id = ? AND attribute_id = ? AND session_id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiii", $new_quantityCart, $product_id, $id, $attribute_id);
+            $stmt->bind_param("iiiis", $new_quantityCart, $product_id, $id, $attribute_id, $session);
             $stmt->execute();
     
             if ($stmt->affected_rows > 0) {
@@ -414,7 +412,7 @@ class ProductStockModel {
     
     public function getTemporaryCartEntry($product_id, $id, $attribute_id, $session) {
         global $conn;
-    
+
         $sql = "SELECT * FROM " . PREFIX . "temporary_cart WHERE product_id = ? AND id = ? AND attribute_id = ? AND session_id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("iiis", $product_id, $id, $attribute_id, $session);
@@ -424,10 +422,10 @@ class ProductStockModel {
         if ($result->num_rows > 0) {
             return $result->fetch_assoc();
         } else {
-            return null;
+            return false;
         }
-    }    
-
+    }  
+      
     public function restoreStockFromCart($user_id, $session_id, $product_id = null, $id = null, $attribute_id = null) {
         global $conn;
         
@@ -493,7 +491,8 @@ class ProductStockModel {
                         return createResponse("Sessão e carrinho excluídos!", 200);
                     } else {
                         return createResponse("Falha ao atualizar a opção de estoque pai.", 500);
-                    }                             
+                    }
+                             
                 } else {
                     return ['status' => 500, 'message' => "Falha ao restaurar o estoque para o produto $product_id, ID $id, Atributo $attribute_id."];
                 }
